@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<item android:id="@+id/big_picture" 
+	android:title="Big Image" 
+	android:icon="@drawable/camera_icon_32x32">
+	</item>
+<item android:id="@+id/small_picture" 
+	android:title="Small Image" 
+	android:icon="@drawable/camera_icon_32x32">
+	</item>
+</menu>
