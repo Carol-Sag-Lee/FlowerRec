@@ -25,6 +25,7 @@ import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
 import android.widget.ImageView;
 
 import com.example.image.util.RotateBitmap;
@@ -65,12 +66,12 @@ public abstract class ImageViewTouchBase extends ImageView {
     float mMaxZoom;
     
     /**
-     * 高亮状�?
+     * 高亮状�?
      */
     public static final int STATE_HIGHLIGHT = 0x0;
     
     /**
-     * 涂鸦状�?
+     * 涂鸦状�?
      */
     public static final int STATE_DOODLE = STATE_HIGHLIGHT + 1;
     
@@ -396,5 +397,10 @@ public abstract class ImageViewTouchBase extends ImageView {
     protected void panBy(float dx, float dy) {
         postTranslate(dx, dy);
         setImageMatrix(getImageViewMatrix());
+    }
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

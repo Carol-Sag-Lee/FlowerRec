@@ -12,7 +12,8 @@
     <color name="green">#00FF00</color>
     <string name="running_cut_process">请稍等</string>
     <string name="coarse_cut_button">粗调</string>
-    <string name="crop">裁剪</string>
+    <string name="crop">粗调</string>
+        <string name="sub_crop">微调</string>
     <string name="rotate">旋转</string>
     <string name="rotate_left">向左旋转</string>
     <string name="rotate_right">向右旋转</string>
@@ -40,6 +41,11 @@
     <string name="camera_button">相机</string>
      <string name="loading">加载相片中...</string>
      <string name="retrieval">搜索</string>
+     <string name = "color">颜色</string>
+     <string name = "width">宽度</string>
+     <string name = "blur">模糊</string>
+      <string name = "emboss">浮雕</string>
+     
     <string-array name="specific_item">
         <item>怀旧</item>
         <item>模糊</item>
@@ -51,4 +57,14 @@
         <item>霓虹</item>
         <item>重叠</item>
     </string-array>
+    	<string name="width_1">1像素</string>
+	<string name="width_3">3像素</string>
+	<string name="width_5">5像素</string>
+	<string name="color_red">红色</string>
+	<string name="color_green">绿色</string>
+	<string name="color_blue">蓝色</string>
+	<string name="color">画笔颜色</string>
+	<string name="width">画笔宽度</string>
+	<string name="blur">模糊效果</string>
+	<string name="emboss">浮雕效果</string>	
 </resources>

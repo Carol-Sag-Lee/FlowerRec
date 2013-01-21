@@ -2,13 +2,29 @@ package com.example.image.view;
 
 import java.util.ArrayList;
 
+import com.example.image.EditImageActivity;
+import com.example.image.R;
+import com.example.image.view.DrawView;
+
+
+
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.EmbossMaskFilter;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Rect;
+import android.graphics.Bitmap.Config;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
-
+import android.view.MenuInflater;
 import com.example.image.util.EditImage;
 
 public class CropImageView extends ImageViewTouchBase {
@@ -18,7 +34,12 @@ public class CropImageView extends ImageViewTouchBase {
     int mMotionEdge;
     private EditImage mCropImage;
     public ImageMoveView mMoveView;
-    
+    public DrawView mdrawView ;
+    /*
+     * 微调参数
+     * */
+    private EmbossMaskFilter emboss;
+    private BlurMaskFilter blur;
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
@@ -35,8 +56,51 @@ public class CropImageView extends ImageViewTouchBase {
 
     public CropImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        emboss = new EmbossMaskFilter(new float[] 
+                { 1.5f , 1.5f , 1.5f }, 0.6f , 6, 4.2f);
+                blur = new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL);
+    
     }
+   
+     public DrawView getDrawView() {
+         return mdrawView;
+     }
 
+    public void setColor(int i)
+    {
+        switch(i) {
+        case 0:
+            mdrawView.paint.setColor(Color.RED);
+            break;
+        case 1:
+            mdrawView.paint.setColor(Color.GREEN);
+            break;
+        case 2:
+            mdrawView.paint.setColor(Color.BLUE);
+            break;
+        }
+    }
+    
+    public void setWidth(int i)
+    {
+        switch(i) {
+        case 0:
+            mdrawView.paint.setStrokeWidth(1);
+        case 1:
+            mdrawView.paint.setStrokeWidth(3);
+        case 2:
+            mdrawView.paint.setStrokeWidth(5);
+        }
+    }
+    
+    public void setBlurMask() {
+       mdrawView.paint.setMaskFilter(blur);
+    }
+    public void setEmbossMask() {
+        mdrawView.paint.setMaskFilter(emboss);
+     }
+     
+    
     @Override
     protected void zoomTo(float scale, float centerX, float centerY) {
         super.zoomTo(scale, centerX, centerY);
@@ -103,7 +167,9 @@ public class CropImageView extends ImageViewTouchBase {
         if (cropImage.mSaving) {
             return false;
         }
-        
+        //获取拖动事件的发生位置
+        float x = event.getX();
+        float y = event.getY();
         switch (event.getAction()) {
         case MotionEvent.ACTION_DOWN: // CR: inline case blocks.
         	switch (mState)
@@ -125,7 +191,7 @@ public class CropImageView extends ImageViewTouchBase {
         				// ++i.
         				HighlightView hv = mHighlightViews.get(i);
         				int edge = hv.getHit(event.getX(), event.getY());
-        				// 如果是按住了选中框，则变换模�?
+        				// 如果是按住了选中框，则变换模�?
         				if (edge != HighlightView.GROW_NONE) {
         					mMotionEdge = edge;
         					mMotionHighlightView = hv;
@@ -309,7 +375,7 @@ public class CropImageView extends ImageViewTouchBase {
     }
     
     /**
-     * 设置是剪切状态还是涂�?
+     * 设置是剪切状态还是涂�?
      * @param doodle
      */
     public void setState(int state)
@@ -322,4 +388,9 @@ public class CropImageView extends ImageViewTouchBase {
     	mMoveView = moveView;
     	invalidate();
     }
+    
+    public void setDrawView(DrawView drawView) {
+        mdrawView = drawView;
+    }
+    
 }

@@ -51,6 +51,15 @@ public class EditImage
 		startCutProcess();
 	}
 	
+	
+	public void subCrop(Bitmap bm)
+	{
+	    mBitmap = bm;
+	    startSubCutProcess();
+	    
+	}
+	
+	
 	/**
 	 * 图片旋转
 	 * @param degree
@@ -174,6 +183,37 @@ public class EditImage
         }, mHandler);
     }
 
+	private void startSubCutProcess() {
+        if (((Activity)mContext).isFinishing()) {
+            return;
+        }
+
+        showProgressDialog(mContext.getResources().getString(R.string.running_cut_process), new Runnable() {
+            public void run() {
+                final CountDownLatch latch = new CountDownLatch(1);
+                final Bitmap b = mBitmap;
+                mHandler.post(new Runnable() {
+                    public void run() {
+                        if (b != mBitmap && b != null) {
+                            mImageView.setImageBitmapResetBase(b, true);
+                            mBitmap.recycle();
+                            mBitmap = b;
+                        }
+                        if (mImageView.getScale() == 1.0f) {
+                            mImageView.center(true, true);
+                        }
+                        latch.countDown();
+                    }
+                });
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                mRunCutProcess.run();
+            }
+        }, mHandler);
+    }
 	/**
 	 * 裁剪并保存
 	 * @return

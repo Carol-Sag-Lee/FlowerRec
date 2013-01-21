@@ -306,12 +306,16 @@ public class ImageFrameAdder
 		mWatermark = bm;
 		
 		ImageMoveView moveView = new ImageMoveView(mImageView);
+
 		mMoveView = moveView;
+
 		int[] location = new int[2];
 		mImageView.getLocationInWindow(location);
 		moveView.setup((mImageView.getWidth() - bm.getWidth()) / 2, (mImageView.getHeight() - bm.getHeight()) / 2, bm);
+		
 		mImageView.setMoveView(moveView);
 	}
+	
 	
 	/**
 	 * 组合涂鸦图片和源图片
