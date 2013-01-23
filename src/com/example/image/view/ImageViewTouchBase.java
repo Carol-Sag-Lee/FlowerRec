@@ -73,7 +73,7 @@ public abstract class ImageViewTouchBase extends ImageView {
     /**
      * 涂鸦状�?
      */
-    public static final int STATE_DOODLE = STATE_HIGHLIGHT + 1;
+    public static final int STATE_SUB_CROP = STATE_HIGHLIGHT + 1;
     
     /**
      * 没有任何操作

@@ -11,6 +11,7 @@ import com.example.image.R;
 import com.example.image.util.ReverseAnimation;
 
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
@@ -37,6 +38,7 @@ import android.widget.Toast;
 
 
 
+@SuppressLint("NewApi")
 public class EditImageActivity extends Activity {
 
 	public boolean mWaitingToPick; // Whether we are wait the user to pick a face.
@@ -254,7 +256,6 @@ public class EditImageActivity extends Activity {
             {
 		        mEditImage.cropCancel();
             }
-		    
 			showSaveAll();
 			resetToOriginal();
 			return;
@@ -284,20 +285,15 @@ public class EditImageActivity extends Activity {
             
             switch (flag)
             {
-            case FLAG_CROP:
-                mMenuView.setImageRes(CROP_IMAGES);
-                mMenuView.setText(CROP_TEXTS);
-                mMenuView.setOnMenuClickListener(cropListener());
+            case FLAG_CROP: //粗调按钮
                 break;
-            case FLAG_SUB_CROP:
+            case FLAG_SUB_CROP: //微调按钮
                 mMenuView.setImageRes(EDIT_IMAGES);
                 mMenuView.setText(EDIT_TEXTS);
                 mMenuView.setOnMenuClickListener(subCropListener());
+                
                 break;
-            case FLAG_RETRIEVAL:
-                mMenuView.setImageRes(RETRIEVAL_IMAGES);
-                mMenuView.setText(RETRIEVAL_TEXTS);
-                mMenuView.setOnMenuClickListener(retrievalListener());
+            case FLAG_RETRIEVAL://检索
                 break;
             }
         }
@@ -310,11 +306,7 @@ public class EditImageActivity extends Activity {
      * @return
      */
     
-       //搜索
-    private OnMenuClickListener retrievalListener() {
-     // TODO Auto-generated method stub
-     return null;
- }
+
      //微调
     private OnMenuClickListener subCropListener()
     {
@@ -324,13 +316,14 @@ public class EditImageActivity extends Activity {
             public void onMenuItemClick(AdapterView<?> parent, View view,
                     int position)
             {
-                int[] location = new int[3];
+                int[] location = new int[4];
                 view.getLocationInWindow(location);
                 int left = location[0];
                 int flag = -1;
                 switch (position)
                 {
                 case 0: // 颜色
+                    flag = FLAG_COLOR;
                     mMenuView.hide();
                     showSaveStep();
                     return;
@@ -338,10 +331,8 @@ public class EditImageActivity extends Activity {
                     flag = FLAG_WIDTH;
                     break;
                 case 2:// 模糊
-                    flag = FLAG_BLUR;
                     break;
                 case 3: // 浮雕
-                    flag = FLAG_EMBOSS;
                     break;
                 }
                 
@@ -356,123 +347,18 @@ public class EditImageActivity extends Activity {
             
         };
     }
-    //粗调
-    private OnMenuClickListener cropListener() {
-        crop();
-        return null;
+    
+    /**
+     * 菜单消失处理
+     */
+    private void dimissMenu()
+    {
+        mMenuView.dismiss();
+        mMenuView = null;
     }
-
     private void retrieval(Bitmap m) {
 	}
 
-
-
-	/**
-	 * 关闭进度条
-	 */
-	private void closeProgress()
-	{
-		if (null != mProgress)
-		{
-			mProgress.dismiss();
-			mProgress = null;
-		}
-	}
-	
-	
-	/**
-	 * 重新设置一下图片
-	 */
-	private void reset()
-	{
-		mImageView.setImageBitmap(mTmpBmp);
-		mImageView.invalidate();
-	}
-	
-	
-	/**
-	 * 保存图片到本地
-	 * @param bm
-	 */
-	private String saveBitmap(Bitmap bm)
-	{
-		mProgressDialog = ProgressDialog.show(this, null, getResources().getString(R.string.save_bitmap));
-		mProgressDialog.show();
-		return mEditImage.saveToLocal(bm);
-	}
-	
-	
-	
-	// ----------------------------------------------------功能----------------------------------------------------
-
-	/**
-	 * 进行操作前的准备
-	 * @param state 当前准备进入的操作状态
-	 * @param imageViewState ImageView要进入的状态
-	 * @param hideHighlight 是否隐藏裁剪框
-	 */
-	private void prepare(int state, int imageViewState, boolean hideHighlight)
-	{
-		resetToOriginal();
-		mEditImage.mSaving = false;
-		if (null != mReverseAnim)
-		{
-			mReverseAnim.cancel();
-			mReverseAnim = null;
-		}
-		
-		if (hideHighlight)
-		{
-			mImageView.hideHighlightView();
-		}
-		mState = state;
-		mImageView.setState(imageViewState);
-		mImageView.invalidate();
-	}
-	
-	/**
-	 * 裁剪
-	 */
-	private void crop()
-	{
-		// 进入裁剪状态
-		prepare(FLAG_CROP, CropImageView.STATE_HIGHLIGHT, false);
-		mShowHandleName.setText(R.string.crop);
-		mEditImage.crop(mTmpBmp);
-		reset();
-	}
-	
-
-    /**
-     *切割
-     */
-    private void subCrop()
-    {
-        // 进入裁剪状态
-        prepare(FLAG_SUB_CROP, CropImageView.STATE_HIGHLIGHT, false);
-        mShowHandleName.setText(R.string.sub_crop);
-        mEditImage.subCrop(mTmpBmp);
-        reset();
-    }
-    
-	
-
-	private void resetToOriginal()
-	{
-		mTmpBmp = mBitmap;
-		mImageView.setImageBitmap(mBitmap);
-		// 已经保存图片
-		mEditImage.mSaving = true;
-		// 清空裁剪操作
-		mImageView.mHighlightViews.clear();
-	}
-	
-	
-	
-	
-
-
-  
 
     
     /**
@@ -490,7 +376,7 @@ public class EditImageActivity extends Activity {
         switch (flag)
         {
         case FLAG_COLOR: // 颜色
-            mSecondaryListMenu.setImageRes(COLOR_IMAGES);
+//            mSecondaryListMenu.setImageRes(COLOR_IMAGES);
             mSecondaryListMenu.setText(COLOR_TEXTS);
             mSecondaryListMenu.setOnMenuClickListener(colorListener());
             break;
@@ -498,15 +384,7 @@ public class EditImageActivity extends Activity {
             mSecondaryListMenu.setText(WIDTH_TEXTS);
             mSecondaryListMenu.setOnMenuClickListener(widthListener());
             break;
-        case FLAG_BLUR: // 模糊
-            mSecondaryListMenu.setImageRes(BLUR_TEXT);
-            mSecondaryListMenu.setOnMenuClickListener(blurListener());
-            break;
-        case FLAG_EMBOSS: //浮雕
-            mSecondaryListMenu.setWidth(480);
-            mSecondaryListMenu.setImageRes(EMBOSS_TEXT);
-            mSecondaryListMenu.setOnMenuClickListener(embossListener());
-            break;
+      
         }
 
         mSecondaryListMenu.show();
@@ -516,8 +394,8 @@ public class EditImageActivity extends Activity {
 /*
  * 二级菜单响应
 */
-	//浮雕
-	private OnMenuClickListener embossListener() {
+    //浮雕
+    private OnMenuClickListener embossListener() {
         mImageView.setEmbossMask();
         return null;
     }
@@ -533,13 +411,28 @@ public class EditImageActivity extends Activity {
                 return new OnMenuClickListener() {
                     
                     @Override
-                    public void onMenuItemClick(AdapterView<?> parent, View view, int position) {
-                      mImageView.setWidth(position);  
+                    public void onMenuItemClick(AdapterView<?> parent, View view, int position)
+                    {
+                        switch(position)
+                        {
+                        case 0://宽度1
+                            width(R.string.width_1);
+                            break;
+                        case 1://宽度2
+                            width(R.string.width_3);
+                            break;
+                        case 2://宽度3
+                            width(R.string.width_5);
+                            break;
+                        }
+                      
                       // 一级菜单隐藏
                       mMenuView.hide();
                       showSaveStep();
                   }
                     
+                 
+
                     @Override
                     public void hideMenu() {
                         dismissSecondaryMenu();
@@ -549,19 +442,28 @@ public class EditImageActivity extends Activity {
 
     //颜色
     private OnMenuClickListener colorListener() {
-	    return new OnMenuClickListener()
+        return new OnMenuClickListener()
         {
             @Override
             public void onMenuItemClick(AdapterView<?> parent, View view,
                     int position)
             {
-                    mImageView.setColor(position);
-            
+                switch(position)
+                {
+                case 0:// 颜色1
+                    color(R.drawable.color_red);
+                case 1://颜色2
+                    color(R.drawable.color_green);
+                case 2://颜色3
+                    color(R.drawable.color_blue);
+                }
+              
                 // 一级菜单隐藏
                 mMenuView.hide();
                 showSaveStep();
             }
             
+
             @Override
             public void hideMenu()
             {
@@ -571,8 +473,6 @@ public class EditImageActivity extends Activity {
         };
     }
 
-    
-    
     /**
      * 隐藏二级菜单
      */
@@ -623,14 +523,128 @@ public class EditImageActivity extends Activity {
         
         return super.onKeyDown(keyCode, event);
     }
-    /**
-     * 菜单消失处理
+
+	
+	// ----------------------------------------------------功能----------------------------------------------------
+
+	/**
+	 * 进行操作前的准备
+	 * @param state 当前准备进入的操作状态
+	 * @param imageViewState ImageView要进入的状态
+	 * @param hideHighlight 是否隐藏裁剪框
+	 */
+	private void prepare(int state, int imageViewState, boolean hideHighlight)
+	{
+		resetToOriginal();
+		mEditImage.mSaving = false;
+		if (null != mReverseAnim)
+		{
+			mReverseAnim.cancel();
+			mReverseAnim = null;
+		}
+		
+		if (hideHighlight)
+		{
+			mImageView.hideHighlightView();
+		}
+		mState = state;
+		mImageView.setState(imageViewState);
+		mImageView.invalidate();
+	}
+	
+	/*
+     * 颜色
      */
-    private void dimissMenu()
-    {
-        mMenuView.dismiss();
-        mMenuView = null;
+    private void color(int res) {
+      prepare(STATE_SUB_CROP,CropImageView.STATE_SUB_CROP,false);
+      mShowHandleName.setText(R.string.color);
+      mImageView.setColor(res);
+      reset();
     }
+	
+	   /*
+     * 宽度
+     * */
+    private void width(int w) {
+        prepare(STATE_SUB_CROP,CropImageView.STATE_SUB_CROP,false);
+       mShowHandleName.setText(R.string.width);
+       mImageView.setWidth(w);
+       reset();
+    }
+	
+	/**
+	 * 粗调
+	 */
+	private void crop()
+	{
+		// 进入裁剪状态
+		prepare(STATE_CROP, CropImageView.STATE_HIGHLIGHT, false);
+		mShowHandleName.setText(R.string.crop);
+		mEditImage.crop(mTmpBmp);
+		reset();
+	}
+	
+
+    /**
+     *微调
+     */
+    private void subCrop()
+    {
+        // 进入裁剪状态
+        prepare(STATE_SUB_CROP, CropImageView.STATE_SUB_CROP,false);
+        mShowHandleName.setText(R.string.sub_crop);
+      
+        reset();
+    }
+    
+	
+
+	private void resetToOriginal()
+	{
+		mTmpBmp = mBitmap;
+		mImageView.setImageBitmap(mBitmap);
+		// 已经保存图片
+		mEditImage.mSaving = true;
+		// 清空裁剪操作
+		mImageView.mHighlightViews.clear();
+	}
+	
+	
+	
+	   /**
+     * 关闭进度条
+     */
+    private void closeProgress()
+    {
+        if (null != mProgress)
+        {
+            mProgress.dismiss();
+            mProgress = null;
+        }
+    }
+    
+    
+    /**
+     * 重新设置一下图片
+     */
+    private void reset()
+    {
+        mImageView.setImageBitmap(mTmpBmp);
+        mImageView.invalidate();
+    }
+    
+    
+    /**
+     * 保存图片到本地
+     * @param bm
+     */
+    private String saveBitmap(Bitmap bm)
+    {
+        mProgressDialog = ProgressDialog.show(this, null, getResources().getString(R.string.save_bitmap));
+        mProgressDialog.show();
+        return mEditImage.saveToLocal(bm);
+    }
+
     //---------------------------------------------------readstream---------------------------------------
 	public static byte[] readStream ( InputStream inStream ) throws Exception
 	{

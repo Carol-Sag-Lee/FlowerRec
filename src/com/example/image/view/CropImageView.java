@@ -34,12 +34,52 @@ public class CropImageView extends ImageViewTouchBase {
     int mMotionEdge;
     private EditImage mCropImage;
     public ImageMoveView mMoveView;
-    public DrawView mdrawView ;
+    
+    //画布
+    float preX;
+    float preY;
+    private Path path;
+    public Paint paint = null;
+    final int VIEW_WIDTH = 320;
+    final int VIEW_HEIGHT = 480;
+    // 定义一个内存中的图片，该图片将作为缓冲区
+    Bitmap cacheBitmap = null;
+    // 定义cacheBitmap上的Canvas对象
+    Canvas cacheCanvas = null;
+    
     /*
      * 微调参数
      * */
     private EmbossMaskFilter emboss;
     private BlurMaskFilter blur;
+    
+    public CropImageView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        
+        /*
+         * drawView设置
+         */
+     // 创建一个与该View相同大小的缓存区
+        cacheBitmap = Bitmap.createBitmap(VIEW_WIDTH
+            , VIEW_HEIGHT , Config.ARGB_8888);
+        cacheCanvas = new Canvas();
+        path = new Path();
+        // 设置cacheCanvas将会绘制到内存中的cacheBitmap上
+        cacheCanvas.setBitmap(cacheBitmap);
+        //设置画笔的颜色
+        paint = new Paint(Paint.DITHER_FLAG);
+        paint.setColor(Color.RED);
+        //设置画笔风格
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(1);
+        //反锯齿
+        paint.setAntiAlias(true);
+        paint.setDither(true);  
+        emboss = new EmbossMaskFilter(new float[]  { 1.5f , 1.5f , 1.5f }, 0.6f , 6, 4.2f);
+        blur = new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL);
+    
+    }
+    
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
@@ -54,29 +94,23 @@ public class CropImageView extends ImageViewTouchBase {
         }
     }
 
-    public CropImageView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        emboss = new EmbossMaskFilter(new float[] 
-                { 1.5f , 1.5f , 1.5f }, 0.6f , 6, 4.2f);
-                blur = new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL);
-    
-    }
-   
-     public DrawView getDrawView() {
-         return mdrawView;
-     }
 
+   
+   
+/*
+ * 设置颜色，宽度，模糊，浮雕
+ */
     public void setColor(int i)
     {
         switch(i) {
         case 0:
-            mdrawView.paint.setColor(Color.RED);
+            paint.setColor(Color.RED);
             break;
         case 1:
-            mdrawView.paint.setColor(Color.GREEN);
+            paint.setColor(Color.GREEN);
             break;
         case 2:
-            mdrawView.paint.setColor(Color.BLUE);
+            paint.setColor(Color.BLUE);
             break;
         }
     }
@@ -85,19 +119,19 @@ public class CropImageView extends ImageViewTouchBase {
     {
         switch(i) {
         case 0:
-            mdrawView.paint.setStrokeWidth(1);
+            paint.setStrokeWidth(1);
         case 1:
-            mdrawView.paint.setStrokeWidth(3);
+            paint.setStrokeWidth(3);
         case 2:
-            mdrawView.paint.setStrokeWidth(5);
+            paint.setStrokeWidth(5);
         }
     }
     
     public void setBlurMask() {
-       mdrawView.paint.setMaskFilter(blur);
+       paint.setMaskFilter(blur);
     }
     public void setEmbossMask() {
-        mdrawView.paint.setMaskFilter(emboss);
+        paint.setMaskFilter(emboss);
      }
      
     
@@ -174,10 +208,10 @@ public class CropImageView extends ImageViewTouchBase {
         case MotionEvent.ACTION_DOWN: // CR: inline case blocks.
         	switch (mState)
         	{
-        	case STATE_NONE:
-        		break;
-        	case STATE_DOODLE:
-        		mMoveView.getHit(event.getX(), event.getY());
+        	case STATE_SUB_CROP:
+        	      path.moveTo(x, y);
+                  preX = x;
+                  preY = y;       
         		break;
         	case STATE_HIGHLIGHT:
         		if (cropImage.mWaitingToPick) {
@@ -213,8 +247,10 @@ public class CropImageView extends ImageViewTouchBase {
         	{
         	case STATE_NONE:
         		break;
-        	case STATE_DOODLE:
-        		break;
+        	case STATE_SUB_CROP:
+        	    cacheCanvas.drawPath(path, paint);     
+                path.reset();
+                break;
         	case STATE_HIGHLIGHT:
         		if (cropImage.mWaitingToPick) {
         			for (int i = 0; i < mHighlightViews.size(); i++) {
@@ -247,9 +283,11 @@ public class CropImageView extends ImageViewTouchBase {
         	{
         	case STATE_NONE:
         		break;
-        	case STATE_DOODLE:
-        		mMoveView.handleMotion(event.getX(), event.getY());
-        		break;
+        	case STATE_SUB_CROP:
+        	    path.quadTo(preX , preY , x, y);
+                preX = x;
+                preY = y;
+                break;
         	case STATE_HIGHLIGHT:
         		if (cropImage.mWaitingToPick) {
         			recomputeFocus(event);
@@ -287,7 +325,7 @@ public class CropImageView extends ImageViewTouchBase {
             }
             break;
         }
-
+        invalidate();
         return true;
     }
 
@@ -343,9 +381,13 @@ public class CropImageView extends ImageViewTouchBase {
         {
         case STATE_NONE:
         	break;
-        case STATE_DOODLE:
-        	mMoveView.draw(canvas);
-        	break;
+        case STATE_SUB_CROP:
+            Paint bmpPaint = new Paint();
+            // 将cacheBitmap绘制到该View组件上
+            canvas.drawBitmap(cacheBitmap , 0 , 0 , bmpPaint);    //
+            // 沿着path绘制
+            canvas.drawPath(path, paint);
+            break;
         case STATE_HIGHLIGHT:
         	for (int i = 0; i < mHighlightViews.size(); i++) {
         		mHighlightViews.get(i).draw(canvas);
@@ -365,7 +407,6 @@ public class CropImageView extends ImageViewTouchBase {
     	{
     		mHighlightViews.get(i).setHidden(true);
     	}
-    	
     	invalidate();
     }
     
@@ -389,8 +430,5 @@ public class CropImageView extends ImageViewTouchBase {
     	invalidate();
     }
     
-    public void setDrawView(DrawView drawView) {
-        mdrawView = drawView;
-    }
-    
+   
 }

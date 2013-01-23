@@ -76,6 +76,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/crop_image"
             android:layout_gravity="center">
+          
             </view>
            
     </LinearLayout>
