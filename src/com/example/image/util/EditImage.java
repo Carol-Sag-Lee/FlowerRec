@@ -158,7 +158,7 @@ public class EditImage
                 mHandler.post(new Runnable() {
                     public void run() {
                         if (b != mBitmap && b != null) {
-                            mImageView.setImageBitmapResetBase(b, true);
+                            mImageView.setImageBitmap(b);
                             mBitmap.recycle();
                             mBitmap = b;
                         }

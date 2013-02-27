@@ -4,11 +4,11 @@ import java.util.ArrayList;
 
 import com.example.image.EditImageActivity;
 import com.example.image.R;
-import com.example.image.view.DrawView;
 
 
 
 import android.content.Context;
+import android.graphics.AvoidXfermode.Mode;
 import android.graphics.Bitmap;
 import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
@@ -16,8 +16,10 @@ import android.graphics.Color;
 import android.graphics.EmbossMaskFilter;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Bitmap.Config;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Menu;
@@ -25,6 +27,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.MenuInflater;
+import android.widget.Toast;
+import android.graphics.PorterDuff;
+import android.graphics.Region;
+
+
 import com.example.image.util.EditImage;
 
 public class CropImageView extends ImageViewTouchBase {
@@ -40,12 +47,13 @@ public class CropImageView extends ImageViewTouchBase {
     float preY;
     private Path path;
     public Paint paint = null;
-    final int VIEW_WIDTH = 320;
-    final int VIEW_HEIGHT = 480;
-    // 定义一个内存中的图片，该图片将作为缓冲区
-    Bitmap cacheBitmap = null;
-    // 定义cacheBitmap上的Canvas对象
-    Canvas cacheCanvas = null;
+    final int VIEW_WIDTH = 480;
+    final int VIEW_HEIGHT = 800;
+   
+
+    public static final int DRAWABLE = 0x0;
+    public static final int UNDRAWABLE = 0x1;
+    private int drawState =UNDRAWABLE ;
     
     /*
      * 微调参数
@@ -59,31 +67,25 @@ public class CropImageView extends ImageViewTouchBase {
         /*
          * drawView设置
          */
-     // 创建一个与该View相同大小的缓存区
-        cacheBitmap = Bitmap.createBitmap(VIEW_WIDTH
-            , VIEW_HEIGHT , Config.ARGB_8888);
-        cacheCanvas = new Canvas();
-        path = new Path();
-        // 设置cacheCanvas将会绘制到内存中的cacheBitmap上
-        cacheCanvas.setBitmap(cacheBitmap);
+
         //设置画笔的颜色
         paint = new Paint(Paint.DITHER_FLAG);
-        paint.setColor(Color.RED);
-        //设置画笔风格
-        paint.setStyle(Paint.Style.STROKE);
+        paint.setColor(Color.WHITE);
         paint.setStrokeWidth(1);
         //反锯齿
         paint.setAntiAlias(true);
         paint.setDither(true);  
         emboss = new EmbossMaskFilter(new float[]  { 1.5f , 1.5f , 1.5f }, 0.6f , 6, 4.2f);
         blur = new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL);
-    
+
+        path = new Path();
+        cacheCanvas = new Canvas();
     }
     
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        if (mBitmapDisplayed.getBitmap() != null) {
+        if (cacheBitmap != null) {
             for (HighlightView hv : mHighlightViews) {
                 hv.mMatrix.set(getImageMatrix());
                 hv.invalidate();
@@ -94,46 +96,11 @@ public class CropImageView extends ImageViewTouchBase {
         }
     }
 
+public void setDrawState(int t) {
+    drawState = t;
+}
+   
 
-   
-   
-/*
- * 设置颜色，宽度，模糊，浮雕
- */
-    public void setColor(int i)
-    {
-        switch(i) {
-        case 0:
-            paint.setColor(Color.RED);
-            break;
-        case 1:
-            paint.setColor(Color.GREEN);
-            break;
-        case 2:
-            paint.setColor(Color.BLUE);
-            break;
-        }
-    }
-    
-    public void setWidth(int i)
-    {
-        switch(i) {
-        case 0:
-            paint.setStrokeWidth(1);
-        case 1:
-            paint.setStrokeWidth(3);
-        case 2:
-            paint.setStrokeWidth(5);
-        }
-    }
-    
-    public void setBlurMask() {
-       paint.setMaskFilter(blur);
-    }
-    public void setEmbossMask() {
-        paint.setMaskFilter(emboss);
-     }
-     
     
     @Override
     protected void zoomTo(float scale, float centerX, float centerY) {
@@ -196,6 +163,18 @@ public class CropImageView extends ImageViewTouchBase {
     }
 
     @Override
+    public void setImageBitmap(Bitmap bitmap) {
+        super.setImageBitmap(bitmap);
+        Drawable d = getDrawable();
+        if (d != null) {
+            d.setDither(true);
+        }
+        // 设置cacheCanvas将会绘制到内存中的mBitmapDisplayed上
+        mBitmapDisplayed = Bitmap.createScaledBitmap(bitmap, VIEW_WIDTH, VIEW_HEIGHT, false);
+      cacheCanvas.drawBitmap(mBitmapDisplayed,0,0,null);
+    }
+    
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
         EditImage cropImage = mCropImage;
         if (cropImage.mSaving) {
@@ -204,14 +183,17 @@ public class CropImageView extends ImageViewTouchBase {
         //获取拖动事件的发生位置
         float x = event.getX();
         float y = event.getY();
+        
         switch (event.getAction()) {
         case MotionEvent.ACTION_DOWN: // CR: inline case blocks.
         	switch (mState)
         	{
         	case STATE_SUB_CROP:
+        	    if(drawState == DRAWABLE ) {
         	      path.moveTo(x, y);
                   preX = x;
-                  preY = y;       
+                  preY = y;     
+        	    }
         		break;
         	case STATE_HIGHLIGHT:
         		if (cropImage.mWaitingToPick) {
@@ -248,8 +230,12 @@ public class CropImageView extends ImageViewTouchBase {
         	case STATE_NONE:
         		break;
         	case STATE_SUB_CROP:
-        	    cacheCanvas.drawPath(path, paint);     
-                path.reset();
+        	    if( drawState == DRAWABLE) {
+        	        path.close();
+        	  //  cacheCanvas.drawPath(path, paint);   
+        	    paint.setStyle(Paint.Style.FILL);
+        	    paint.setAlpha(0);
+        	    }
                 break;
         	case STATE_HIGHLIGHT:
         		if (cropImage.mWaitingToPick) {
@@ -284,9 +270,11 @@ public class CropImageView extends ImageViewTouchBase {
         	case STATE_NONE:
         		break;
         	case STATE_SUB_CROP:
+        	    if(drawState == DRAWABLE) {
         	    path.quadTo(preX , preY , x, y);
                 preX = x;
                 preY = y;
+        	    }
                 break;
         	case STATE_HIGHLIGHT:
         		if (cropImage.mWaitingToPick) {
@@ -308,21 +296,6 @@ public class CropImageView extends ImageViewTouchBase {
         		break;
         	}
         	
-            break;
-        }
-
-        switch (event.getAction()) {
-        case MotionEvent.ACTION_UP:
-            center(true, true);
-            break;
-        case MotionEvent.ACTION_MOVE:
-            // if we're not zoomed then there's no point in even allowing
-            // the user to move the image around. This call to center puts
-            // it back to the normalized location (with false meaning don't
-            // animate).
-            if (getScale() == 1F) {
-                center(true, true);
-            }
             break;
         }
         invalidate();
@@ -377,16 +350,17 @@ public class CropImageView extends ImageViewTouchBase {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        Paint bmpPaint = new Paint();
+        canvas.drawBitmap(mBitmapDisplayed, 0 , 0 , bmpPaint);    //
         switch (mState)
         {
         case STATE_NONE:
         	break;
         case STATE_SUB_CROP:
-            Paint bmpPaint = new Paint();
-            // 将cacheBitmap绘制到该View组件上
-            canvas.drawBitmap(cacheBitmap , 0 , 0 , bmpPaint);    //
+            if(drawState == DRAWABLE) {
             // 沿着path绘制
             canvas.drawPath(path, paint);
+            }
             break;
         case STATE_HIGHLIGHT:
         	for (int i = 0; i < mHighlightViews.size(); i++) {

@@ -18,6 +18,8 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -157,56 +159,25 @@ public class EditImageActivity extends Activity {
 				//获取图片
 				Intent intent = getIntent();
 				String path = intent.getStringExtra("path");
-				Uri uri = intent.getData();
 				Log.d("may", "MainActivity--->path="+path);
-				Log.d("may", "MainActivity--->uri="+uri);
-				if (null != path) //解析PATH
-			    	{	
-				    BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inSampleSize = 2;
-                    mBitmap = BitmapFactory.decodeFile(path, options);
+				if(path == null){
+                    Toast.makeText(this, "NND,path和uri都空", Toast.LENGTH_SHORT).show();
+                    finish();
+                 }
+			
+				   
+                    mBitmap = BitmapFactory.decodeFile(path);
                     if(mBitmap != null){
                         mTmpBmp = mBitmap.copy(Bitmap.Config.ARGB_8888, true);
                         mImageView = (CropImageView) findViewById(R.id.crop_image);
                         mImageView.setImageBitmap(mBitmap);
-                        mImageView.setImageBitmapResetBase(mBitmap, true);
-                        
                         mEditImage = new EditImage(this, mImageView, mBitmap);
                         mImageFrame = new ImageFrameAdder(this, mImageView, mBitmap);
                         mImageView.setEditImage(mEditImage);
                         mImageSpecific = new ImageSpecific(this);
                     }
-				    
-				    
-					}
-					else if(null == path & uri != null){ //解析uri
-                        ContentResolver resolver = getContentResolver();
-                        mImageView = (CropImageView) findViewById(R.id.crop_image);
-                        try {
-                            mContent = readStream(resolver.openInputStream(Uri.parse(uri.toString())));
-                        } catch (Exception e) {
-                            System.out.println(e.getMessage());
-                        } 
-                        BitmapFactory.Options options = new BitmapFactory.Options();
-                        options.inSampleSize = 2;
-                        // 将字节数组转换为ImageView可调用的Bitmap对象
-                        mBitmap = getPicFromBytes(mContent, null);
-                        if(mBitmap != null){
-                            mTmpBmp = mBitmap.copy(Bitmap.Config.ARGB_8888, true);
-                            mImageView = (CropImageView) findViewById(R.id.crop_image);
-                            mImageView.setImageBitmap(mBitmap);
-                            mImageView.setImageBitmapResetBase(mBitmap, true);
-                            
-                            mEditImage = new EditImage(this, mImageView, mBitmap);
-                            mImageFrame = new ImageFrameAdder(this, mImageView, mBitmap);
-                            mImageView.setEditImage(mEditImage);
-                            mImageSpecific = new ImageSpecific(this);
-                        }
-					}
-					else{
-								Toast.makeText(this, "NND,path和uri都空", Toast.LENGTH_SHORT).show();
-							    finish();
-					}
+				
+					
 				
 	}
 	
@@ -228,7 +199,7 @@ public class EditImageActivity extends Activity {
 			Intent data = new Intent();
 			data.putExtra("path", path);
 			setResult(RESULT_OK, data);
-			finish();
+			
 			return;
 		    //取消操作
 		case R.id.cancel:
@@ -266,6 +237,7 @@ public class EditImageActivity extends Activity {
 			//微调
 		case R.id.subtle_cut_button:
 		    flag = FLAG_SUB_CROP;
+		   
 			break;
 		case R.id.retrieval:
 		    flag = FLAG_RETRIEVAL;
@@ -286,12 +258,12 @@ public class EditImageActivity extends Activity {
             switch (flag)
             {
             case FLAG_CROP: //粗调按钮
+                mMenuView.hide();
+                crop();
+                showSaveStep();
                 break;
             case FLAG_SUB_CROP: //微调按钮
-                mMenuView.setImageRes(EDIT_IMAGES);
-                mMenuView.setText(EDIT_TEXTS);
-                mMenuView.setOnMenuClickListener(subCropListener());
-                
+                mImageView.setDrawState(CropImageView.DRAWABLE);
                 break;
             case FLAG_RETRIEVAL://检索
                 break;
@@ -299,53 +271,6 @@ public class EditImageActivity extends Activity {
         }
 
         mMenuView.show();
-    }
-	
-	  /**
-     * 编辑监听器
-     * @return
-     */
-    
-
-     //微调
-    private OnMenuClickListener subCropListener()
-    {
-        return new OnMenuClickListener()
-        {
-            @Override
-            public void onMenuItemClick(AdapterView<?> parent, View view,
-                    int position)
-            {
-                int[] location = new int[4];
-                view.getLocationInWindow(location);
-                int left = location[0];
-                int flag = -1;
-                switch (position)
-                {
-                case 0: // 颜色
-                    flag = FLAG_COLOR;
-                    mMenuView.hide();
-                    showSaveStep();
-                    return;
-                case 1: // 宽度
-                    flag = FLAG_WIDTH;
-                    break;
-                case 2:// 模糊
-                    break;
-                case 3: // 浮雕
-                    break;
-                }
-                
-                initSecondaryMenu(flag ,left);
-            }
-
-            @Override
-            public void hideMenu()
-            {
-                dimissMenu();
-            }
-            
-        };
     }
     
     /**
@@ -361,117 +286,6 @@ public class EditImageActivity extends Activity {
 
 
     
-    /**
-     * 初始化二级菜单
-     * @param flag
-     * @param left
-     */
-    private void initSecondaryMenu(int flag, int left)
-    {
-        mSecondaryListMenu = new SecondaryListMenuView(this);
-        mSecondaryListMenu.setBackgroundResource(R.drawable.popup_bottom_tip);
-        mSecondaryListMenu.setTextSize(16);
-        mSecondaryListMenu.setWidth(300);
-        mSecondaryListMenu.setMargin(left);
-        switch (flag)
-        {
-        case FLAG_COLOR: // 颜色
-//            mSecondaryListMenu.setImageRes(COLOR_IMAGES);
-            mSecondaryListMenu.setText(COLOR_TEXTS);
-            mSecondaryListMenu.setOnMenuClickListener(colorListener());
-            break;
-        case FLAG_WIDTH: // 宽度
-            mSecondaryListMenu.setText(WIDTH_TEXTS);
-            mSecondaryListMenu.setOnMenuClickListener(widthListener());
-            break;
-      
-        }
-
-        mSecondaryListMenu.show();
-    }
-    
-    
-/*
- * 二级菜单响应
-*/
-    //浮雕
-    private OnMenuClickListener embossListener() {
-        mImageView.setEmbossMask();
-        return null;
-    }
-
-    //模糊
-    private OnMenuClickListener blurListener() {
-       mImageView.setBlurMask();
-    return null;
-    }
-
-    //宽度
-    private OnMenuClickListener widthListener() {
-                return new OnMenuClickListener() {
-                    
-                    @Override
-                    public void onMenuItemClick(AdapterView<?> parent, View view, int position)
-                    {
-                        switch(position)
-                        {
-                        case 0://宽度1
-                            width(R.string.width_1);
-                            break;
-                        case 1://宽度2
-                            width(R.string.width_3);
-                            break;
-                        case 2://宽度3
-                            width(R.string.width_5);
-                            break;
-                        }
-                      
-                      // 一级菜单隐藏
-                      mMenuView.hide();
-                      showSaveStep();
-                  }
-                    
-                 
-
-                    @Override
-                    public void hideMenu() {
-                        dismissSecondaryMenu();
-                    }
-                };
-    }
-
-    //颜色
-    private OnMenuClickListener colorListener() {
-        return new OnMenuClickListener()
-        {
-            @Override
-            public void onMenuItemClick(AdapterView<?> parent, View view,
-                    int position)
-            {
-                switch(position)
-                {
-                case 0:// 颜色1
-                    color(R.drawable.color_red);
-                case 1://颜色2
-                    color(R.drawable.color_green);
-                case 2://颜色3
-                    color(R.drawable.color_blue);
-                }
-              
-                // 一级菜单隐藏
-                mMenuView.hide();
-                showSaveStep();
-            }
-            
-
-            @Override
-            public void hideMenu()
-            {
-                dismissSecondaryMenu();
-            }
-            
-        };
-    }
 
     /**
      * 隐藏二级菜单
@@ -552,25 +366,7 @@ public class EditImageActivity extends Activity {
 		mImageView.invalidate();
 	}
 	
-	/*
-     * 颜色
-     */
-    private void color(int res) {
-      prepare(STATE_SUB_CROP,CropImageView.STATE_SUB_CROP,false);
-      mShowHandleName.setText(R.string.color);
-      mImageView.setColor(res);
-      reset();
-    }
 	
-	   /*
-     * 宽度
-     * */
-    private void width(int w) {
-        prepare(STATE_SUB_CROP,CropImageView.STATE_SUB_CROP,false);
-       mShowHandleName.setText(R.string.width);
-       mImageView.setWidth(w);
-       reset();
-    }
 	
 	/**
 	 * 粗调
@@ -593,7 +389,6 @@ public class EditImageActivity extends Activity {
         // 进入裁剪状态
         prepare(STATE_SUB_CROP, CropImageView.STATE_SUB_CROP,false);
         mShowHandleName.setText(R.string.sub_crop);
-      
         reset();
     }
     
