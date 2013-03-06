@@ -41,11 +41,6 @@
     <string name="camera_button">相机</string>
      <string name="loading">加载相片中...</string>
      <string name="retrieval">搜索</string>
-     <string name = "color">颜色</string>
-     <string name = "width">宽度</string>
-     <string name = "blur">模糊</string>
-      <string name = "emboss">浮雕</string>
-     
     <string-array name="specific_item">
         <item>怀旧</item>
         <item>模糊</item>

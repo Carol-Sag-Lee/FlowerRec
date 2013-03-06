@@ -2,6 +2,8 @@ package com.example.image.view;
 
 import java.util.ArrayList;
 
+import sun.swing.plaf.synth.Paint9Painter.PaintType;
+
 import com.example.image.EditImageActivity;
 import com.example.image.R;
 
@@ -19,6 +21,7 @@ import android.graphics.Path;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Bitmap.Config;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -33,6 +36,7 @@ import android.graphics.Region;
 
 
 import com.example.image.util.EditImage;
+import com.example.image.util.GrabCut;
 
 public class CropImageView extends ImageViewTouchBase {
     public ArrayList<HighlightView> mHighlightViews = new ArrayList<HighlightView>();
@@ -45,12 +49,20 @@ public class CropImageView extends ImageViewTouchBase {
     //画布
     float preX;
     float preY;
-    private Path path;
+    
+    int scX;
+    int scY;
+    
+    float x;
+    float y;
+
     public Paint paint = null;
     final int VIEW_WIDTH = 480;
     final int VIEW_HEIGHT = 800;
-   
+    public Path path;
 
+    RectF mRect1 = new RectF();
+    
     public static final int DRAWABLE = 0x0;
     public static final int UNDRAWABLE = 0x1;
     private int drawState =UNDRAWABLE ;
@@ -70,14 +82,14 @@ public class CropImageView extends ImageViewTouchBase {
 
         //设置画笔的颜色
         paint = new Paint(Paint.DITHER_FLAG);
-        paint.setColor(Color.WHITE);
-        paint.setStrokeWidth(1);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setColor(Color.RED);
+        paint.setStrokeWidth(3);
         //反锯齿
         paint.setAntiAlias(true);
         paint.setDither(true);  
         emboss = new EmbossMaskFilter(new float[]  { 1.5f , 1.5f , 1.5f }, 0.6f , 6, 4.2f);
         blur = new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL);
-
         path = new Path();
         cacheCanvas = new Canvas();
     }
@@ -170,7 +182,7 @@ public void setDrawState(int t) {
             d.setDither(true);
         }
         // 设置cacheCanvas将会绘制到内存中的mBitmapDisplayed上
-        mBitmapDisplayed = Bitmap.createScaledBitmap(bitmap, VIEW_WIDTH, VIEW_HEIGHT, false);
+      mBitmapDisplayed = Bitmap.createScaledBitmap(bitmap, bitmap.getWidth(), bitmap.getHeight(), false);
       cacheCanvas.drawBitmap(mBitmapDisplayed,0,0,null);
     }
     
@@ -181,8 +193,10 @@ public void setDrawState(int t) {
             return false;
         }
         //获取拖动事件的发生位置
-        float x = event.getX();
-        float y = event.getY();
+         x = event.getX();
+         y = event.getY();
+         scX = (int)x;
+         scY = (int)y;
         
         switch (event.getAction()) {
         case MotionEvent.ACTION_DOWN: // CR: inline case blocks.
@@ -190,10 +204,11 @@ public void setDrawState(int t) {
         	{
         	case STATE_SUB_CROP:
         	    if(drawState == DRAWABLE ) {
-        	      path.moveTo(x, y);
-                  preX = x;
-                  preY = y;     
+        	        path.moveTo(x, y);
+        	        preX = x;
+        	        preY = y;
         	    }
+        	    invalidate();
         		break;
         	case STATE_HIGHLIGHT:
         		if (cropImage.mWaitingToPick) {
@@ -223,47 +238,7 @@ public void setDrawState(int t) {
         		break;
         	}
             break;
-        // CR: vertical space before case blocks.
-        case MotionEvent.ACTION_UP:
-        	switch (mState)
-        	{
-        	case STATE_NONE:
-        		break;
-        	case STATE_SUB_CROP:
-        	    if( drawState == DRAWABLE) {
-        	        path.close();
-        	  //  cacheCanvas.drawPath(path, paint);   
-        	    paint.setStyle(Paint.Style.FILL);
-        	    paint.setAlpha(0);
-        	    }
-                break;
-        	case STATE_HIGHLIGHT:
-        		if (cropImage.mWaitingToPick) {
-        			for (int i = 0; i < mHighlightViews.size(); i++) {
-        				HighlightView hv = mHighlightViews.get(i);
-        				if (hv.hasFocus()) {
-        					cropImage.mCrop = hv;
-        					for (int j = 0; j < mHighlightViews.size(); j++) {
-        						if (j == i) { // CR: if j != i do your shit; no need
-        							// for continue.
-        							continue;
-        						}
-        						mHighlightViews.get(j).setHidden(true);
-        					}
-        					centerBasedOnHighlightView(hv);
-        					cropImage.mWaitingToPick = false;
-        					return true;
-        				}
-        			}
-        		} else if (mMotionHighlightView != null) {
-        			centerBasedOnHighlightView(mMotionHighlightView);
-        			mMotionHighlightView.setMode(HighlightView.ModifyMode.None);
-        		}
-        		mMotionHighlightView = null;
-        		break;
-        	}
-        	
-            break;
+       
         case MotionEvent.ACTION_MOVE:
         	switch (mState)
         	{
@@ -271,9 +246,11 @@ public void setDrawState(int t) {
         		break;
         	case STATE_SUB_CROP:
         	    if(drawState == DRAWABLE) {
-        	    path.quadTo(preX , preY , x, y);
-                preX = x;
-                preY = y;
+        	        path.reset();
+        	       mRect1.set(preX, preY, x, y);
+        	       path.addRect(mRect1, Path.Direction.CW);
+        	       invalidate();
+                    break;
         	    }
                 break;
         	case STATE_HIGHLIGHT:
@@ -297,10 +274,62 @@ public void setDrawState(int t) {
         	}
         	
             break;
+            // CR: vertical space before case blocks.
+        case MotionEvent.ACTION_UP:
+            switch (mState)
+            {
+            case STATE_NONE:
+                break;
+            case STATE_SUB_CROP:
+                if( drawState == DRAWABLE) {
+                    cacheCanvas.drawPath(path, paint);
+                    path.reset();
+                    invalidate();
+                    int w=mBitmapDisplayed.getWidth(),h=mBitmapDisplayed.getHeight();  
+                    int[] pixels = new int[w*h];
+                    mBitmapDisplayed.getPixels(pixels, 0, w, 0, 0, w, h);
+                    Log.d("PIXELS IS EMPTY",""+(pixels==null));
+                    int[] resultImg =  GrabCut.grabCut(pixels, w, h, (int)preX, (int)preY,(int) x, (int)y );
+                    Log.d("RESULT PIXELS IS EMPTY",""+(resultImg==null));
+                    Bitmap resultImgBit=Bitmap.createBitmap(w, h, Config.RGB_565);  
+                    resultImgBit.setPixels(resultImg, 0, w, 0, 0, w, h);
+                    mBitmapDisplayed = resultImgBit;
+                   
+                    break;
+                }
+                break;
+            case STATE_HIGHLIGHT:
+                if (cropImage.mWaitingToPick) {
+                    for (int i = 0; i < mHighlightViews.size(); i++) {
+                        HighlightView hv = mHighlightViews.get(i);
+                        if (hv.hasFocus()) {
+                            cropImage.mCrop = hv;
+                            for (int j = 0; j < mHighlightViews.size(); j++) {
+                                if (j == i) { // CR: if j != i do your shit; no need
+                                    // for continue.
+                                    continue;
+                                }
+                                mHighlightViews.get(j).setHidden(true);
+                            }
+                            centerBasedOnHighlightView(hv);
+                            cropImage.mWaitingToPick = false;
+                            return true;
+                        }
+                    }
+                } else if (mMotionHighlightView != null) {
+                    centerBasedOnHighlightView(mMotionHighlightView);
+                    mMotionHighlightView.setMode(HighlightView.ModifyMode.None);
+                }
+                mMotionHighlightView = null;
+                break;
+            }
+            
+            break;
         }
         invalidate();
         return true;
     }
+
 
     // Pan the displayed image to make sure the cropping rectangle is visible.
     private void ensureVisible(HighlightView hv) {
@@ -350,8 +379,7 @@ public void setDrawState(int t) {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        Paint bmpPaint = new Paint();
-        canvas.drawBitmap(mBitmapDisplayed, 0 , 0 , bmpPaint);    //
+        canvas.drawBitmap(mBitmapDisplayed, 0 , 0 ,paint);    //
         switch (mState)
         {
         case STATE_NONE:

@@ -386,6 +386,8 @@ public class EditImage
             });
         }
     };
+    
+    
 	
 	class BackgroundJob implements Runnable
     {

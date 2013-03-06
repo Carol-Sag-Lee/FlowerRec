@@ -119,7 +119,7 @@ public class EditImageActivity extends Activity {
     private final int STATE_REVERSE = STATE_CROP <<4;
     private int mState;
 
-    
+    public static String path;
     
 	private Bitmap tmpContour;
 	
@@ -158,7 +158,7 @@ public class EditImageActivity extends Activity {
 				
 				//获取图片
 				Intent intent = getIntent();
-				String path = intent.getStringExtra("path");
+				path = intent.getStringExtra("path");
 				Log.d("may", "MainActivity--->path="+path);
 				if(path == null){
                     Toast.makeText(this, "NND,path和uri都空", Toast.LENGTH_SHORT).show();

@@ -168,7 +168,7 @@ containing a value of this type.
         public static final int activity_main=0x7f050001;
         public static final int album_button=0x7f050024;
         public static final int app_name=0x7f050000;
-        public static final int blur=0x7f05002a;
+        public static final int blur=0x7f050030;
         public static final int cameraDemo=0x7f050003;
         public static final int cameraGalleryDemo=0x7f050002;
         public static final int camera_button=0x7f050025;
@@ -176,15 +176,15 @@ containing a value of this type.
         public static final int check=0x7f050008;
         public static final int choose_img=0x7f05001b;
         public static final int coarse_cut_button=0x7f05000a;
-        public static final int color=0x7f050028;
-        public static final int color_blue=0x7f050031;
-        public static final int color_green=0x7f050030;
-        public static final int color_red=0x7f05002f;
+        public static final int color=0x7f05002e;
+        public static final int color_blue=0x7f05002d;
+        public static final int color_green=0x7f05002c;
+        public static final int color_red=0x7f05002b;
         public static final int contrast=0x7f050015;
         public static final int crop=0x7f05000b;
         public static final int doodle=0x7f050018;
         public static final int editImageActivity=0x7f050004;
-        public static final int emboss=0x7f05002b;
+        public static final int emboss=0x7f050031;
         public static final int frame=0x7f050017;
         public static final int frame_doodle=0x7f050016;
         public static final int handling=0x7f050023;
@@ -211,10 +211,10 @@ containing a value of this type.
         public static final int sub_crop=0x7f05000c;
         public static final int subtle_cut_button=0x7f050012;
         public static final int undo=0x7f050007;
-        public static final int width=0x7f050029;
-        public static final int width_1=0x7f05002c;
-        public static final int width_3=0x7f05002d;
-        public static final int width_5=0x7f05002e;
+        public static final int width=0x7f05002f;
+        public static final int width_1=0x7f050028;
+        public static final int width_3=0x7f050029;
+        public static final int width_5=0x7f05002a;
     }
     public static final class style {
         public static final int popup_in_out=0x7f080000;

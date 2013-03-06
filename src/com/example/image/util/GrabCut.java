@@ -1,5 +1,7 @@
 package com.example.image.util;
 
+
+
 public class GrabCut {
 static {
     System.loadLibrary("GrabCut");
@@ -10,9 +12,8 @@ static {
    * @param width the current view width 
 
    * @param height the current view height 
+ * @return 
 
    */ 
-public static native void grabCut() {
-    
-}
+public static native int[] grabCut(int[] buf,float width, float height, int preX, int preY, int x, int y) ;
 }
