@@ -285,16 +285,8 @@ public void setDrawState(int t) {
                     cacheCanvas.drawPath(path, paint);
                     path.reset();
                     invalidate();
-                    int w=mBitmapDisplayed.getWidth(),h=mBitmapDisplayed.getHeight();  
-                    int[] pixels = new int[w*h];
-                    mBitmapDisplayed.getPixels(pixels, 0, w, 0, 0, w, h);
-                    Log.d("PIXELS IS EMPTY",""+(pixels==null));
-                    int[] resultImg =  GrabCut.grabCut(pixels, w, h, (int)preX, (int)preY,(int) x, (int)y );
-                    Log.d("RESULT PIXELS IS EMPTY",""+(resultImg==null));
-                    Bitmap resultImgBit=Bitmap.createBitmap(w, h, Config.RGB_565);  
-                    resultImgBit.setPixels(resultImg, 0, w, 0, 0, w, h);
-                    mBitmapDisplayed = resultImgBit;
-                   
+                   BackJob bj = new BackJob() ;
+                   bj.start();
                     break;
                 }
                 break;
@@ -430,6 +422,23 @@ public void setDrawState(int t) {
     {
     	mMoveView = moveView;
     	invalidate();
+    }
+    
+    class BackJob extends Thread{
+        public BackJob() {}
+        public void run() {
+            int w=mBitmapDisplayed.getWidth(),h=mBitmapDisplayed.getHeight();  
+            int[] pixels = new int[w*h];
+            mBitmapDisplayed.getPixels(pixels, 0, w, 0, 0, w, h);
+            Log.d("PIXELS IS EMPTY",""+(pixels==null));
+            Log.d("preX:preY:x:y:w:h:",""+preX+" "+preY+" "+x+" "+y+" "+w+" "+h);
+            int[] resultImg =  GrabCut.grabCut(pixels, w, h,preX, preY, x, y );
+            Log.d("RESULT PIXELS IS EMPTY",""+(resultImg==null));
+            Bitmap resultImgBit=Bitmap.createBitmap(w, h, Config.RGB_565);  
+            resultImgBit.setPixels(resultImg, 0, w, 0, 0, w, h);
+            mBitmapDisplayed = resultImgBit;
+            invalidate();
+        }
     }
     
    

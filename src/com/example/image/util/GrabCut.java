@@ -15,5 +15,5 @@ static {
  * @return 
 
    */ 
-public static native int[] grabCut(int[] buf,float width, float height, int preX, int preY, int x, int y) ;
+public static native int[] grabCut(int[] buf,float width, float height, float preX, float preY, float x, float y) ;
 }

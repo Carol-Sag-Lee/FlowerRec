@@ -9,4 +9,5 @@ include $(OPENCV_MK_PATH)
 endif
 LOCAL_MODULE    := GrabCut
 LOCAL_SRC_FILES := GrabCut.cpp
+LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -llog
 include $(BUILD_SHARED_LIBRARY)
