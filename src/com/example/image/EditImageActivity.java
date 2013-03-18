@@ -7,6 +7,7 @@ import com.example.image.util.EditImage;
 import com.example.image.util.ImageFrameAdder;
 import com.example.image.util.ImageSpecific;
 import com.example.image.view.CropImageView;
+import com.example.image.view.DrawView;
 import com.example.image.R;
 import com.example.image.util.ReverseAnimation;
 
@@ -26,6 +27,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -58,10 +60,11 @@ public class EditImageActivity extends Activity {
 	private Bitmap mTmpBmp;
 	
 	private CropImageView mImageView;
+	private DrawView mDrawView;
 	private EditImage mEditImage;
 	private ImageFrameAdder mImageFrame;
 	private ImageSpecific mImageSpecific;
-   
+	public static Handler subCropHandler = new Handler();
 	/**
      * 一级菜单
      */
@@ -177,7 +180,7 @@ public class EditImageActivity extends Activity {
                         mImageSpecific = new ImageSpecific(this);
                     }
 				
-					
+				
 				
 	}
 	
@@ -206,13 +209,13 @@ public class EditImageActivity extends Activity {
 			setResult(RESULT_CANCELED);
             finish();
 			return;
-			//不理解
+			
 		case R.id.save_step:
-		      if(mState == STATE_CROP)
+		      if(mState == STATE_CROP || mState == STATE_SUB_CROP)
 	            {
 		              mTmpBmp = mEditImage.cropAndSave(mTmpBmp);
 	            }
-		      
+		     
 			mBitmap = mTmpBmp;
 			showSaveAll();
 			reset();
@@ -223,7 +226,7 @@ public class EditImageActivity extends Activity {
 			return;
 			//不理解
 		case R.id.cancel_step:
-		    if (mState == STATE_CROP)
+		    if (mState == STATE_CROP || mState == STATE_SUB_CROP)
             {
 		        mEditImage.cropCancel();
             }
@@ -237,7 +240,8 @@ public class EditImageActivity extends Activity {
 			//微调
 		case R.id.subtle_cut_button:
 		    flag = FLAG_SUB_CROP;
-		   
+		
+		   showSaveStep();
 			break;
 		case R.id.retrieval:
 		    flag = FLAG_RETRIEVAL;
@@ -247,7 +251,9 @@ public class EditImageActivity extends Activity {
 		initMenu(flag);
 	}
 	
-	private void initMenu(int flag)
+	
+
+    private void initMenu(int flag)
     {
         if (null == mMenuView)
         {
@@ -263,7 +269,10 @@ public class EditImageActivity extends Activity {
                 showSaveStep();
                 break;
             case FLAG_SUB_CROP: //微调按钮
-                mImageView.setDrawState(CropImageView.DRAWABLE);
+                mMenuView.hide();
+                subCrop();
+                showSaveStep();
+               
                 break;
             case FLAG_RETRIEVAL://检索
                 break;
@@ -365,6 +374,7 @@ public class EditImageActivity extends Activity {
 		mImageView.setState(imageViewState);
 		mImageView.invalidate();
 	}
+	   
 	
 	
 	
@@ -379,7 +389,6 @@ public class EditImageActivity extends Activity {
 		mEditImage.crop(mTmpBmp);
 		reset();
 	}
-	
 
     /**
      *微调
@@ -387,9 +396,12 @@ public class EditImageActivity extends Activity {
     private void subCrop()
     {
         // 进入裁剪状态
-        prepare(STATE_SUB_CROP, CropImageView.STATE_SUB_CROP,false);
-        mShowHandleName.setText(R.string.sub_crop);
-        reset();
+        prepare(STATE_SUB_CROP, CropImageView.STATE_SUB_CROP,true);
+      	Log.i("editimageActivity监测","subcrop handler外调用");
+      	mShowHandleName.setText(R.string.sub_crop);
+      	mEditImage.subCrop(mTmpBmp); 
+         reset();
+      
     }
     
 	
@@ -466,4 +478,6 @@ public class EditImageActivity extends Activity {
 				return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 		return null;
 	}
+
+  
 }

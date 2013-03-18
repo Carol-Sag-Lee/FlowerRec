@@ -37,8 +37,9 @@ public class HighlightView {
 
     @SuppressWarnings("unused")
     private static final String TAG = "HighlightView";
-    View mContext; // The View displaying the image.
+    View mContext; // The View displaying the image. 显示图片的view
 
+    //状态
     public static final int GROW_NONE = (1 << 0);
     public static final int GROW_LEFT_EDGE = (1 << 1);
     public static final int GROW_RIGHT_EDGE = (1 << 2);
@@ -47,9 +48,11 @@ public class HighlightView {
     public static final int MOVE = (1 << 5);
 
     public HighlightView(View ctx) {
+        Log.i("HighlightView监测","HighlightView");
         mContext = ctx;
     }
 
+    //初始化资源文件
     private void init() {
         android.content.res.Resources resources = mContext.getResources();
         mResizeDrawableWidth = resources.getDrawable(R.drawable.camera_crop_width);
@@ -59,20 +62,33 @@ public class HighlightView {
 
     public boolean mIsFocused;
     boolean mHidden;
-
+    
+    
+    /*
+     * 设置聚焦
+     */
     public boolean hasFocus() {
+        Log.i("Highlightview 监测","hasFocus");
         return mIsFocused;
     }
 
     public void setFocus(boolean f) {
+        Log.i("Highlightview 监测","setFocus");
         mIsFocused = f;
     }
-
+    /*
+     * 设置隐藏
+     */
     public void setHidden(boolean hidden) {
+        Log.i("Highlightview 监测","setHidden");
         mHidden = hidden;
     }
 
+    /*
+     * 绘制画板
+     */
     public void draw(Canvas canvas) {
+        Log.i("Highlightview 监测","draw");
         if (mHidden) {
             return;
         }
@@ -144,15 +160,22 @@ public class HighlightView {
         }
     }
 
+    /*
+     * 设置模式
+     */
     public void setMode(ModifyMode mode) {
+        Log.i("Highlightview 监测","setMode");
         if (mode != mMode) {
             mMode = mode;
             mContext.invalidate();
         }
     }
 
-    // Determines which edges are hit by touching at (x, y).
+    /*
+     * 根据坐标选择改变了哪个边Determines which edges are hit by touching at (x, y).
+     */
     public int getHit(float x, float y) {
+        Log.i("Highlightview 监测","getHit");
         Rect r = computeLayout();
         final float hysteresis = 20F;
         int retval = GROW_NONE;
@@ -210,9 +233,12 @@ public class HighlightView {
         return retval;
     }
 
-    // Handles motion (dx, dy) in screen space.
+    /*
+     * 根据哪个边来设置移动Handles motion (dx, dy) in screen space.
+     */
     // The "edge" parameter specifies which edges the user is dragging.
     public void handleMotion(int edge, float dx, float dy) {
+        Log.i("Highlightview 监测","handleMotion");
         Rect r = computeLayout();
         if (edge == GROW_NONE) {
             return;
@@ -220,23 +246,26 @@ public class HighlightView {
             // Convert to image space before sending to moveBy().
             moveBy(dx * (mCropRect.width() / r.width()), dy * (mCropRect.height() / r.height()));
         } else {
-            if (((GROW_LEFT_EDGE | GROW_RIGHT_EDGE) & edge) == 0) {
+            if (((GROW_LEFT_EDGE | GROW_RIGHT_EDGE) & edge) == 0) {//不是左右移动
                 dx = 0;
             }
 
-            if (((GROW_TOP_EDGE | GROW_BOTTOM_EDGE) & edge) == 0) {
+            if (((GROW_TOP_EDGE | GROW_BOTTOM_EDGE) & edge) == 0) {//不是上下移动
                 dy = 0;
             }
 
             // Convert to image space before sending to growBy().
             float xDelta = dx * (mCropRect.width() / r.width());
             float yDelta = dy * (mCropRect.height() / r.height());
-            growBy((((edge & GROW_LEFT_EDGE) != 0) ? -1 : 1) * xDelta, (((edge & GROW_TOP_EDGE) != 0) ? -1 : 1) * yDelta);
+            growBy((((edge & GROW_LEFT_EDGE) != 0) ? -1 : 1) * xDelta, (((edge & GROW_TOP_EDGE) != 0) ? -1 : 1) * yDelta);//移动参数设置 向左和向上都设置为负
         }
     }
 
-    // Grows the cropping rectange by (dx, dy) in image space.
+    /*
+     *  修改矩形框大小Grows the cropping rectange by (dx, dy) in image space.
+     */
     void moveBy(float dx, float dy) {
+        Log.i("Highlightview 监测","moveBy");
         Rect invalRect = new Rect(mDrawRect);
 
         mCropRect.offset(dx, dy);
@@ -252,11 +281,14 @@ public class HighlightView {
         mContext.invalidate(invalRect);
     }
 
-    // Grows the cropping rectange by (dx, dy) in image space.
+    /*
+     * 修改矩形框大小 Grows the cropping rectange by (dx, dy) in image space.
+     */
     void growBy(float dx, float dy) {
+        Log.i("Highlightview 监测","growBy");
         if (mMaintainAspectRatio) {
             if (dx != 0) {
-                dy = dx / mInitialAspectRatio;
+                dy= dx / mInitialAspectRatio;
             } else if (dy != 0) {
                 dx = dy * mInitialAspectRatio;
             }
@@ -266,14 +298,14 @@ public class HighlightView {
         // Grow at most half of the difference between the image rectangle and
         // the cropping rectangle.
         RectF r = new RectF(mCropRect);
-        if (dx > 0F && r.width() + 2 * dx > mImageRect.width()) {
-            float adjustment = (mImageRect.width() - r.width()) / 2F;
+        if (dx > 0F && r.width() + 2 * dx > mImageRect.width()) {//裁剪矩形框超出图像横向边框
+            float adjustment = (mImageRect.width() - r.width()) / 2F;//最大变到图像大小
             dx = adjustment;
-            if (mMaintainAspectRatio) {
+            if (mMaintainAspectRatio) {//如果需要保持纵横比
                 dy = dx / mInitialAspectRatio;
             }
         }
-        if (dy > 0F && r.height() + 2 * dy > mImageRect.height()) {
+        if (dy > 0F && r.height() + 2 * dy > mImageRect.height()) {//裁剪矩形框超出图像纵向边框
             float adjustment = (mImageRect.height() - r.height()) / 2F;
             dy = adjustment;
             if (mMaintainAspectRatio) {
@@ -284,7 +316,7 @@ public class HighlightView {
         r.inset(-dx, -dy);
 
         // Don't let the cropping rectangle shrink too fast.
-        final float widthCap = 25F;
+        final float widthCap = 5F;
         if (r.width() < widthCap) {
             r.inset(-(widthCap - r.width()) / 2F, 0F);
         }
@@ -294,14 +326,14 @@ public class HighlightView {
         }
 
         // Put the cropping rectangle inside the image rectangle.
-        if (r.left < mImageRect.left) {
+        if (r.left < mImageRect.left) {//裁剪矩形左边超过了图像矩形的左边界
             r.offset(mImageRect.left - r.left, 0F);
-        } else if (r.right > mImageRect.right) {
+        } else if (r.right > mImageRect.right) {//裁剪矩形右边超过了图像矩形的右边界
             r.offset(-(r.right - mImageRect.right), 0);
         }
-        if (r.top < mImageRect.top) {
+        if (r.top < mImageRect.top) {//裁剪矩形上边超过了图像矩形的上边界
             r.offset(0F, mImageRect.top - r.top);
-        } else if (r.bottom > mImageRect.bottom) {
+        } else if (r.bottom > mImageRect.bottom) {//裁剪矩形下边超过了图像矩形的下边界
             r.offset(0F, -(r.bottom - mImageRect.bottom));
         }
 
@@ -310,24 +342,37 @@ public class HighlightView {
         mContext.invalidate();
     }
 
-    // Returns the cropping rectangle in image space.
+    /*
+     * 返回切割矩形框 Returns the cropping rectangle in image space.
+     */
     public Rect getCropRect() {
+        Log.i("Highlightview 监测","getCropRect");
         return new Rect((int) mCropRect.left, (int) mCropRect.top, (int) mCropRect.right, (int) mCropRect.bottom);
     }
 
-    // Maps the cropping rectangle from image space to screen space.
+    /*
+     * 将矩形框从图像区域映射到屏幕区域 Maps the cropping rectangle from image space to screen space.
+     */
     private Rect computeLayout() {
+        Log.i("Highlightview 监测","computeLayout");
 		RectF r = new RectF(mCropRect.left, mCropRect.top, mCropRect.right, mCropRect.bottom);
-        mMatrix.mapRect(r);
+        mMatrix.mapRect(r);//矩形r用mMatrix变形
         return new Rect(Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom));
     }
 
+    /*
+     * 刷新view
+     */
     public void invalidate() {
         mDrawRect = computeLayout();
     }
 
+    /*
+     * view设置参数格式等信息
+     */
     public void setup(Matrix m, Rect imageRect, RectF cropRect, boolean circle, boolean maintainAspectRatio) {
-        if (circle) {
+        Log.i("Highlightview 监测","setup");
+        if (circle) {//按住的是矩形拐角
             maintainAspectRatio = true;
         }
         mMatrix = new Matrix(m);
@@ -349,11 +394,15 @@ public class HighlightView {
         mMode = ModifyMode.None;
         init();
     }
-
+/*
+ * ModifyMode 修改模式
+ */
     public enum ModifyMode {
         None, Move, Grow
     }
-
+/*
+ * 成员变量
+ */
     private ModifyMode mMode = ModifyMode.None;
 
     public Rect mDrawRect; // in screen space

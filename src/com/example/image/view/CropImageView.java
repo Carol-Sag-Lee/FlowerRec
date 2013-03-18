@@ -30,17 +30,19 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.MenuInflater;
+import android.view.View;
 import android.widget.Toast;
 import android.graphics.PorterDuff;
 import android.graphics.Region;
 
 
 import com.example.image.util.EditImage;
-import com.example.image.util.GrabCut;
 
 public class CropImageView extends ImageViewTouchBase {
     public ArrayList<HighlightView> mHighlightViews = new ArrayList<HighlightView>();
-    HighlightView mMotionHighlightView = null;
+    public  HighlightView mMotionHighlightView = null;
+   
+    public DrawView mDrawView = null;
     float mLastX, mLastY;
     int mMotionEdge;
     private EditImage mCropImage;
@@ -49,10 +51,7 @@ public class CropImageView extends ImageViewTouchBase {
     //画布
     float preX;
     float preY;
-    
-    int scX;
-    int scY;
-    
+   
     float x;
     float y;
 
@@ -64,7 +63,9 @@ public class CropImageView extends ImageViewTouchBase {
     RectF mRect1 = new RectF();
     
     public static final int DRAWABLE = 0x0;
-    public static final int UNDRAWABLE = 0x1;
+    public static final int UNDRAWABLE = DRAWABLE + 1;
+    public static final int SUBCROP = DRAWABLE + 2;
+    public static int subCropState = UNDRAWABLE;
     private int drawState =UNDRAWABLE ;
     
     /*
@@ -73,28 +74,16 @@ public class CropImageView extends ImageViewTouchBase {
     private EmbossMaskFilter emboss;
     private BlurMaskFilter blur;
     
+    
     public CropImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        
-        /*
-         * drawView设置
-         */
-
-        //设置画笔的颜色
-        paint = new Paint(Paint.DITHER_FLAG);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setColor(Color.RED);
-        paint.setStrokeWidth(3);
-        //反锯齿
-        paint.setAntiAlias(true);
-        paint.setDither(true);  
-        emboss = new EmbossMaskFilter(new float[]  { 1.5f , 1.5f , 1.5f }, 0.6f , 6, 4.2f);
-        blur = new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL);
-        path = new Path();
         cacheCanvas = new Canvas();
+        Log.i("cropimageview", "cropimageview中初始化");
+        mDrawView = new DrawView(context,this);
+       
     }
     
-    @Override
+
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
         if (cacheBitmap != null) {
@@ -105,13 +94,20 @@ public class CropImageView extends ImageViewTouchBase {
                     centerBasedOnHighlightView(hv);
                 }
             }
+    
+                mDrawView.mMatrix.set(getImageMatrix());
+                
+            
         }
     }
-
-public void setDrawState(int t) {
-    drawState = t;
-}
-   
+        
+        public void setDrawState(int t) {
+            drawState = t;
+        }
+           
+        public void setSubDrawState(int t) {
+            subCropState = SUBCROP;
+        } 
 
     
     @Override
@@ -190,137 +186,116 @@ public void setDrawState(int t) {
     public boolean onTouchEvent(MotionEvent event) {
         EditImage cropImage = mCropImage;
         if (cropImage.mSaving) {
+            Log.d("cropimageview"," cropImage.mSaving 啦");
             return false;
         }
+        Log.d("cropimageview"," cropImage木有mSaving 啦");
         //获取拖动事件的发生位置
          x = event.getX();
          y = event.getY();
-         scX = (int)x;
-         scY = (int)y;
         
-        switch (event.getAction()) {
-        case MotionEvent.ACTION_DOWN: // CR: inline case blocks.
-        	switch (mState)
-        	{
-        	case STATE_SUB_CROP:
-        	    if(drawState == DRAWABLE ) {
-        	        path.moveTo(x, y);
-        	        preX = x;
-        	        preY = y;
-        	    }
-        	    invalidate();
-        		break;
-        	case STATE_HIGHLIGHT:
-        		if (cropImage.mWaitingToPick) {
-        			recomputeFocus(event);
-        		} else {
-        			for (int i = 0; i < mHighlightViews.size(); i++) { // CR:
-        				// iterator
-        				// for; if
-        				// not, then
-        				// i++ =>
-        				// ++i.
-        				HighlightView hv = mHighlightViews.get(i);
-        				int edge = hv.getHit(event.getX(), event.getY());
-        				// 如果是按住了选中框，则变换模�?
-        				if (edge != HighlightView.GROW_NONE) {
-        					mMotionEdge = edge;
-        					mMotionHighlightView = hv;
-        					mLastX = event.getX();
-        					mLastY = event.getY();
-        					// CR: get rid of the extraneous parens below.
-        					mMotionHighlightView.setMode((edge == HighlightView.MOVE) ? HighlightView.ModifyMode.Move
-        							: HighlightView.ModifyMode.Grow);
-        					break;
-        				}
-        			}
-        		}
-        		break;
-        	}
-            break;
-       
-        case MotionEvent.ACTION_MOVE:
-        	switch (mState)
-        	{
-        	case STATE_NONE:
-        		break;
-        	case STATE_SUB_CROP:
-        	    if(drawState == DRAWABLE) {
-        	        path.reset();
-        	       mRect1.set(preX, preY, x, y);
-        	       path.addRect(mRect1, Path.Direction.CW);
-        	       invalidate();
-                    break;
-        	    }
-                break;
-        	case STATE_HIGHLIGHT:
-        		if (cropImage.mWaitingToPick) {
-        			recomputeFocus(event);
-        		} else if (mMotionHighlightView != null) {
-        			mMotionHighlightView.handleMotion(mMotionEdge, event.getX() - mLastX, event.getY() - mLastY);
-        			mLastX = event.getX();
-        			mLastY = event.getY();
-        			
-        			if (true) {
-        				// This section of code is optional. It has some user
-        				// benefit in that moving the crop rectangle against
-        				// the edge of the screen causes scrolling but it means
-        				// that the crop rectangle is no longer fixed under
-        				// the user's finger.
-        				ensureVisible(mMotionHighlightView);
-        			}
-        		}
-        		break;
-        	}
-        	
-            break;
-            // CR: vertical space before case blocks.
-        case MotionEvent.ACTION_UP:
-            switch (mState)
-            {
-            case STATE_NONE:
-                break;
-            case STATE_SUB_CROP:
-                if( drawState == DRAWABLE) {
-                    cacheCanvas.drawPath(path, paint);
-                    path.reset();
-                    invalidate();
-                   BackJob bj = new BackJob() ;
-                   bj.start();
-                    break;
-                }
-                break;
-            case STATE_HIGHLIGHT:
-                if (cropImage.mWaitingToPick) {
-                    for (int i = 0; i < mHighlightViews.size(); i++) {
-                        HighlightView hv = mHighlightViews.get(i);
-                        if (hv.hasFocus()) {
-                            cropImage.mCrop = hv;
-                            for (int j = 0; j < mHighlightViews.size(); j++) {
-                                if (j == i) { // CR: if j != i do your shit; no need
-                                    // for continue.
-                                    continue;
-                                }
-                                mHighlightViews.get(j).setHidden(true);
+        
+   
+        switch(mState) {
+        case STATE_SUB_CROP:
+        	  switch(event.getAction()) {
+        	  case MotionEvent.ACTION_DOWN:
+        	      mLastX = event.getX();
+                  mLastY = event.getY();
+        	      mDrawView.handleDown(mLastX,mLastY);
+        	      break;
+        	  case MotionEvent.ACTION_MOVE:
+        	      mDrawView.handleMove(event.getX(), event.getY());
+        	        mLastX = event.getX();
+                    mLastY = event.getY();
+        	      break;
+        	  case MotionEvent.ACTION_UP:
+        	      if (cropImage.mWaitingToPick) {
+        	          
+        	      }
+        	      mDrawView.handleUp();
+        	      setSubDrawState(SUBCROP);
+        	      break;
+        	  }
+        	        break;
+        case STATE_HIGHLIGHT:
+             switch (event.getAction()) { 
+             case MotionEvent.ACTION_DOWN:
+                 if (cropImage.mWaitingToPick) {
+                     recomputeFocus(event);//setFocus
+                 } else {
+                     for (int i = 0; i < mHighlightViews.size(); i++) { // CR:
+                         // iterator
+                         // for; if
+                         // not, then
+                         // i++ =>
+                         // ++i.
+                         HighlightView hv = mHighlightViews.get(i);
+                         int edge = hv.getHit(event.getX(), event.getY());
+                         // 如果是按住了选中框，则变换模�?
+                         if (edge != HighlightView.GROW_NONE) {
+                             mMotionEdge = edge;
+                             mMotionHighlightView = hv;
+                             mLastX = event.getX();
+                             mLastY = event.getY();
+                             // CR: get rid of the extraneous parens below.
+                             mMotionHighlightView.setMode((edge == HighlightView.MOVE) ? HighlightView.ModifyMode.Move
+                                     : HighlightView.ModifyMode.Grow);
+                            
+                         }
+                     }
+                 }
+                 break;
+                    case MotionEvent.ACTION_MOVE:
+                        if (cropImage.mWaitingToPick) {
+                            recomputeFocus(event);
+                        } else if (mMotionHighlightView != null) {
+                            mMotionHighlightView.handleMotion(mMotionEdge, event.getX() - mLastX, event.getY() - mLastY);
+                            mLastX = event.getX();
+                            mLastY = event.getY();
+                            
+                            if (true) {
+                                // This section of code is optional. It has some user
+                                // benefit in that moving the crop rectangle against
+                                // the edge of the screen causes scrolling but it means
+                                // that the crop rectangle is no longer fixed under
+                                // the user's finger.
+                                ensureVisible(mMotionHighlightView);
                             }
-                            centerBasedOnHighlightView(hv);
-                            cropImage.mWaitingToPick = false;
-                            return true;
                         }
-                    }
-                } else if (mMotionHighlightView != null) {
-                    centerBasedOnHighlightView(mMotionHighlightView);
-                    mMotionHighlightView.setMode(HighlightView.ModifyMode.None);
-                }
-                mMotionHighlightView = null;
-                break;
-            }
-            
-            break;
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        if (cropImage.mWaitingToPick) {
+                            for (int i = 0; i < mHighlightViews.size(); i++) {
+                                HighlightView hv = mHighlightViews.get(i);
+                                if (hv.hasFocus()) {
+                                    cropImage.mCrop = hv;
+                                    for (int j = 0; j < mHighlightViews.size(); j++) {
+                                        if (j == i) { // CR: if j != i do your shit; no need
+                                            // for continue.
+                                            continue;
+                                        }
+                                        mHighlightViews.get(j).setHidden(true);
+                                    }
+                                    centerBasedOnHighlightView(hv);
+                                    cropImage.mWaitingToPick = false;
+                                    return true;
+                                }
+                            }
+                        } else if (mMotionHighlightView != null) {
+                            centerBasedOnHighlightView(mMotionHighlightView);
+                            mMotionHighlightView.setMode(HighlightView.ModifyMode.None);
+                        }
+                        mMotionHighlightView = null;
+                        break;
+             }
         }
-        invalidate();
         return true;
-    }
+                 
+        }    
+   
+
+
 
 
     // Pan the displayed image to make sure the cropping rectangle is visible.
@@ -341,8 +316,10 @@ public void setDrawState(int t) {
         }
     }
 
-    // If the cropping rectangle's size changed significantly, change the
-    // view's center and scale according to the cropping rectangle.
+    /*
+    矩形大小改变太多时，根据切割矩形改变view的中心和尺寸If the cropping rectangle's size changed significantly, change the
+     view's center and scale according to the cropping rectangle.
+     */
     private void centerBasedOnHighlightView(HighlightView hv) {
         Rect drawRect = hv.mDrawRect;
 
@@ -368,6 +345,8 @@ public void setDrawState(int t) {
         ensureVisible(hv);
     }
 
+    
+    
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -377,10 +356,7 @@ public void setDrawState(int t) {
         case STATE_NONE:
         	break;
         case STATE_SUB_CROP:
-            if(drawState == DRAWABLE) {
-            // 沿着path绘制
-            canvas.drawPath(path, paint);
-            }
+                mDrawView.draw(canvas);
             break;
         case STATE_HIGHLIGHT:
         	for (int i = 0; i < mHighlightViews.size(); i++) {
@@ -395,6 +371,9 @@ public void setDrawState(int t) {
         invalidate();
     }
     
+  
+    
+    
     public void hideHighlightView()
     {
     	for (int i = 0, size = mHighlightViews.size(); i < size; i++)
@@ -402,6 +381,11 @@ public void setDrawState(int t) {
     		mHighlightViews.get(i).setHidden(true);
     	}
     	invalidate();
+    }
+    
+    public void hideDrawView() {
+            mDrawView.setHidden(true);
+        invalidate();
     }
     
     public void setEditImage(EditImage cropImage)
@@ -424,22 +408,4 @@ public void setDrawState(int t) {
     	invalidate();
     }
     
-    class BackJob extends Thread{
-        public BackJob() {}
-        public void run() {
-            int w=mBitmapDisplayed.getWidth(),h=mBitmapDisplayed.getHeight();  
-            int[] pixels = new int[w*h];
-            mBitmapDisplayed.getPixels(pixels, 0, w, 0, 0, w, h);
-            Log.d("PIXELS IS EMPTY",""+(pixels==null));
-            Log.d("preX:preY:x:y:w:h:",""+preX+" "+preY+" "+x+" "+y+" "+w+" "+h);
-            int[] resultImg =  GrabCut.grabCut(pixels, w, h,preX, preY, x, y );
-            Log.d("RESULT PIXELS IS EMPTY",""+(resultImg==null));
-            Bitmap resultImgBit=Bitmap.createBitmap(w, h, Config.RGB_565);  
-            resultImgBit.setPixels(resultImg, 0, w, 0, 0, w, h);
-            mBitmapDisplayed = resultImgBit;
-            invalidate();
-        }
-    }
-    
-   
 }

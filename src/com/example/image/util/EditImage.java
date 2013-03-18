@@ -10,6 +10,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
@@ -17,22 +18,26 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.media.FaceDetector;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.Toast;
 
 
 import com.example.image.R;
 import com.example.image.view.CropImageView;
+import com.example.image.view.DrawView;
 import com.example.image.view.HighlightView;
 
 public class EditImage
 {
 	public boolean mWaitingToPick; // Whether we are wait the user to pick a face.
+	public boolean mWaitingToPickDraw;
     public boolean mSaving; // Whether the "save" button is already clicked.
     public HighlightView mCrop;
     
 	private Context mContext;
 	private Handler mHandler = new Handler();
 	private CropImageView mImageView;
+	private DrawView mDrawView;
 	private Bitmap mBitmap;
 	
 	public EditImage(Context context, CropImageView imageView, Bitmap bm)
@@ -47,15 +52,26 @@ public class EditImage
 	 */
 	public void crop(Bitmap bm)
 	{
+	    Log.i("editimage 监测","crop");
 		mBitmap = bm;
 		startCutProcess();
 	}
 	
-	
+
+
+/*
+ * 图片微调
+ * */
+    public void subCrop(Bitmap mTmpBmp) {
+        Log.i("editimage 监测","subCrop");
+        mBitmap = mTmpBmp;
+        startSubCutProcess();
+    }
 
 	
 	
-	/**
+
+    /**
 	 * 图片旋转
 	 * @param degree
 	 */
@@ -179,6 +195,43 @@ public class EditImage
     }
 
 
+
+    private void startSubCutProcess() {
+        if (((Activity)mContext).isFinishing()) {
+            return;
+        }
+
+        showProgressDialog(mContext.getResources().getString(R.string.running_cut_process), new Runnable() {
+            public void run() {
+                final CountDownLatch latch = new CountDownLatch(1);
+                final Bitmap b = mBitmap;
+                mHandler.post(new Runnable() {
+                    public void run() {
+                        if (b != mBitmap && b != null) {
+                            mImageView.setImageBitmap(b);
+                            mBitmap.recycle();
+                            mBitmap = b;
+                        }
+                        if (mImageView.getScale() == 1.0f) {
+                            mImageView.center(true, true);
+                        }
+                        latch.countDown();
+                    }
+                });
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                Log.d("carol", "开始识别drawview drawstate" );
+                if(mDrawView.drawState == DrawView.MOTION_UP) {
+                    Log.d("carol", "可以识别drawview drawstate" );
+                mRunSubCutProcess.run();
+                }
+            }
+        }, mHandler);
+    }
+	
 	/**
 	 * 裁剪并保存
 	 * @return
@@ -258,6 +311,8 @@ public class EditImage
     	new Thread(new BackgroundJob(progress, job, handler)).start();
     }
     
+    //mRunCutProcess开始
+
     Runnable mRunCutProcess = new Runnable() {
         float mScale = 1F;
         Matrix mImageMatrix;
@@ -275,7 +330,7 @@ public class EditImage
 
             int midX = (int) midPoint.x;
             int midY = (int) midPoint.y;
-
+            Log.i("EditImage 监测","mRunCutProcess运行 before HighlightView");
             HighlightView hv = new HighlightView(mImageView);
 
             int width = mBitmap.getWidth();
@@ -309,6 +364,7 @@ public class EditImage
 
         // Create a default HightlightView if we found no face in the picture.
         private void makeDefault() {
+            Log.i("EditImage 监测", "makeDefault 初始化highlightView的地方");//初始化HighLightView的地方
             HighlightView hv = new HighlightView(mImageView);
 
             int width = mBitmap.getWidth();
@@ -325,6 +381,7 @@ public class EditImage
             int y = (height - cropHeight) / 2;
 
             RectF cropRect = new RectF(x, y, x + cropWidth, y + cropHeight);
+            Log.i("EditImage 监测", "makeDefault hightlightview setup的地方");
             hv.setup(mImageMatrix, imageRect, cropRect, false, false);
             mImageView.add(hv);
         }
@@ -368,10 +425,11 @@ public class EditImage
                             handleFace(mFaces[i]);
                         }
                     } else {
-                        makeDefault();
+                        makeDefault();//没有人脸监测框的时候会出现这个DEFAULT的框
                     }
                     mImageView.invalidate();
                     if (mImageView.mHighlightViews.size() == 1) {
+                        Log.i("EditImage","mHighlightViews初始化");
                         mCrop = mImageView.mHighlightViews.get(0);
                         mCrop.setFocus(true);
                     }
@@ -387,6 +445,49 @@ public class EditImage
         }
     };
     
+    //mRunCutProcess结束
+
+    Runnable mRunSubCutProcess = new Runnable() {
+        Matrix mImageMatrix;
+        
+        private void makeDefault() {
+            Log.i("EditImage 监测", "makeDefault 初始化DrawView的地方");//初始化DrawView的地方
+               DrawView tmpView = new DrawView(mContext,mImageView);
+               
+    
+        }   
+
+        @Override
+        public void run() {
+                mImageMatrix = mImageView.getImageMatrix();
+
+                mHandler.post(new Runnable() {
+                    public void run() {
+                        makeDefault();
+                        mImageView.invalidate();
+                        mDrawView = mImageView.mDrawView;
+                        mDrawView.setFocus(true);
+                        int w =mBitmap.getWidth();
+                        int h = mBitmap.getHeight();
+                        float preX = mDrawView.getPreX();
+                        float preY = mDrawView.getPreY();
+                        float xx = mDrawView.getX();
+                        float yy = mDrawView.getY();
+                        int[] pixels = new int[w*h];
+                        mBitmap.getPixels(pixels, 0, w, 0, 0, w, h);
+                          Log.d("PIXELS IS EMPTY",""+(pixels==null));
+                        Log.d("preX:preY:x:y:w:h:",""+preX+" "+preY+" "+xx+" "+yy+" "+w+" "+h);
+                        int[] resultImg =  GrabCut.grabCut(pixels, w, h,preX, preY, xx,yy );
+                        Log.d("RESULT PIXELS IS EMPTY",""+(resultImg==null));
+                        Bitmap resultImgBit=Bitmap.createBitmap(w, h, Config.RGB_565);  
+                        resultImgBit.setPixels(resultImg, 0, w, 0, 0, w, h);
+                        mImageView.setImageBitmap(resultImgBit); }
+            });
+            
+            
+        }
+    
+    };
     
 	
 	class BackgroundJob implements Runnable
@@ -423,4 +524,14 @@ public class EditImage
     		}
     	}
     }
+
+
+    public void setDrawView(DrawView tmpDrawView) {
+        // TODO Auto-generated method stub
+        mDrawView = tmpDrawView;
+    }
+
+
+  
+
 }
