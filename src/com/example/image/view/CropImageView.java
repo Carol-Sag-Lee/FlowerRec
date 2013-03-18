@@ -42,7 +42,6 @@ public class CropImageView extends ImageViewTouchBase {
     public ArrayList<HighlightView> mHighlightViews = new ArrayList<HighlightView>();
     public  HighlightView mMotionHighlightView = null;
    
-    public DrawView mDrawView = null;
     float mLastX, mLastY;
     int mMotionEdge;
     private EditImage mCropImage;
@@ -51,21 +50,19 @@ public class CropImageView extends ImageViewTouchBase {
     //画布
     float preX;
     float preY;
-   
+    public Path path;
     float x;
     float y;
 
     public Paint paint = null;
     final int VIEW_WIDTH = 480;
     final int VIEW_HEIGHT = 800;
-    public Path path;
+
 
     RectF mRect1 = new RectF();
     
     public static final int DRAWABLE = 0x0;
     public static final int UNDRAWABLE = DRAWABLE + 1;
-    public static final int SUBCROP = DRAWABLE + 2;
-    public static int subCropState = UNDRAWABLE;
     private int drawState =UNDRAWABLE ;
     
     /*
@@ -77,10 +74,19 @@ public class CropImageView extends ImageViewTouchBase {
     
     public CropImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        //画笔设置
+        paint = new Paint(Paint.DITHER_FLAG);
+        paint.setColor(Color.RED);
+        paint.setStrokeWidth(1);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setAntiAlias(true);
+        paint.setDither(true);  
+        //背景设置
+        cacheBitmap = Bitmap.createBitmap(VIEW_WIDTH , VIEW_HEIGHT , Config.ARGB_8888);
         cacheCanvas = new Canvas();
+        cacheCanvas.setBitmap(cacheBitmap);
+        path = new Path();
         Log.i("cropimageview", "cropimageview中初始化");
-        mDrawView = new DrawView(context,this);
-       
     }
     
 
@@ -94,9 +100,6 @@ public class CropImageView extends ImageViewTouchBase {
                     centerBasedOnHighlightView(hv);
                 }
             }
-    
-                mDrawView.mMatrix.set(getImageMatrix());
-                
             
         }
     }
@@ -104,10 +107,7 @@ public class CropImageView extends ImageViewTouchBase {
         public void setDrawState(int t) {
             drawState = t;
         }
-           
-        public void setSubDrawState(int t) {
-            subCropState = SUBCROP;
-        } 
+ 
 
     
     @Override
@@ -179,6 +179,7 @@ public class CropImageView extends ImageViewTouchBase {
         }
         // 设置cacheCanvas将会绘制到内存中的mBitmapDisplayed上
       mBitmapDisplayed = Bitmap.createScaledBitmap(bitmap, bitmap.getWidth(), bitmap.getHeight(), false);
+      
       cacheCanvas.drawBitmap(mBitmapDisplayed,0,0,null);
     }
     
@@ -186,35 +187,35 @@ public class CropImageView extends ImageViewTouchBase {
     public boolean onTouchEvent(MotionEvent event) {
         EditImage cropImage = mCropImage;
         if (cropImage.mSaving) {
-            Log.d("cropimageview"," cropImage.mSaving 啦");
             return false;
         }
-        Log.d("cropimageview"," cropImage木有mSaving 啦");
         //获取拖动事件的发生位置
          x = event.getX();
          y = event.getY();
         
-        
-   
         switch(mState) {
         case STATE_SUB_CROP:
         	  switch(event.getAction()) {
         	  case MotionEvent.ACTION_DOWN:
-        	      mLastX = event.getX();
-                  mLastY = event.getY();
-        	      mDrawView.handleDown(mLastX,mLastY);
+//        	      Log.i("cropimageview","");
+        	      preX = x;
+        	      preY = y;
+        	      invalidate();
         	      break;
         	  case MotionEvent.ACTION_MOVE:
-        	      mDrawView.handleMove(event.getX(), event.getY());
-        	        mLastX = event.getX();
-                    mLastY = event.getY();
+        	      Log.i("cropimageview","path.quadTo");
+        	      mRect1.set(preX, preY, x, y);
+//        	      path.addRect(mRect1, Path.Direction.CW);   
+//        	      path.reset();
+        	      invalidate();
         	      break;
         	  case MotionEvent.ACTION_UP:
-        	      if (cropImage.mWaitingToPick) {
-        	          
-        	      }
-        	      mDrawView.handleUp();
-        	      setSubDrawState(SUBCROP);
+        	      Log.i("cropimageview","path.reset");
+        	      cacheCanvas.drawRect(mRect1, paint);  
+        	      mCropImage.subCrop(preX,preY,x,y);
+//        	      path.reset();
+        	      invalidate();
+        	      
         	      break;
         	  }
         	        break;
@@ -350,13 +351,16 @@ public class CropImageView extends ImageViewTouchBase {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        canvas.drawBitmap(mBitmapDisplayed, 0 , 0 ,paint);    //
+        Paint bmpPaint = new Paint();  
+        canvas.drawPath(path, bmpPaint);
+        canvas.drawBitmap(cacheBitmap, 0 , 0 ,bmpPaint);    //
+     
         switch (mState)
         {
         case STATE_NONE:
         	break;
         case STATE_SUB_CROP:
-                mDrawView.draw(canvas);
+            canvas.drawPath(path, paint);
             break;
         case STATE_HIGHLIGHT:
         	for (int i = 0; i < mHighlightViews.size(); i++) {
@@ -383,10 +387,7 @@ public class CropImageView extends ImageViewTouchBase {
     	invalidate();
     }
     
-    public void hideDrawView() {
-            mDrawView.setHidden(true);
-        invalidate();
-    }
+  
     
     public void setEditImage(EditImage cropImage)
     {

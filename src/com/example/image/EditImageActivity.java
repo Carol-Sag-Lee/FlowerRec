@@ -7,7 +7,6 @@ import com.example.image.util.EditImage;
 import com.example.image.util.ImageFrameAdder;
 import com.example.image.util.ImageSpecific;
 import com.example.image.view.CropImageView;
-import com.example.image.view.DrawView;
 import com.example.image.R;
 import com.example.image.util.ReverseAnimation;
 
@@ -60,7 +59,6 @@ public class EditImageActivity extends Activity {
 	private Bitmap mTmpBmp;
 	
 	private CropImageView mImageView;
-	private DrawView mDrawView;
 	private EditImage mEditImage;
 	private ImageFrameAdder mImageFrame;
 	private ImageSpecific mImageSpecific;
@@ -270,9 +268,10 @@ public class EditImageActivity extends Activity {
                 break;
             case FLAG_SUB_CROP: //微调按钮
                 mMenuView.hide();
-                subCrop();
                 showSaveStep();
-               
+                prepare(STATE_SUB_CROP, CropImageView.STATE_SUB_CROP,true);
+                mShowHandleName.setText(R.string.sub_crop);
+               mImageView.setDrawState(CropImageView.DRAWABLE);
                 break;
             case FLAG_RETRIEVAL://检索
                 break;
@@ -393,17 +392,8 @@ public class EditImageActivity extends Activity {
     /**
      *微调
      */
-    private void subCrop()
-    {
-        // 进入裁剪状态
-        prepare(STATE_SUB_CROP, CropImageView.STATE_SUB_CROP,true);
-      	Log.i("editimageActivity监测","subcrop handler外调用");
-      	mShowHandleName.setText(R.string.sub_crop);
-      	mEditImage.subCrop(mTmpBmp); 
-         reset();
-      
-    }
-    
+  
+
 	
 
 	private void resetToOriginal()

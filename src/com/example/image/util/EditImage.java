@@ -24,7 +24,6 @@ import android.widget.Toast;
 
 import com.example.image.R;
 import com.example.image.view.CropImageView;
-import com.example.image.view.DrawView;
 import com.example.image.view.HighlightView;
 
 public class EditImage
@@ -37,8 +36,14 @@ public class EditImage
 	private Context mContext;
 	private Handler mHandler = new Handler();
 	private CropImageView mImageView;
-	private DrawView mDrawView;
+
 	private Bitmap mBitmap;
+	
+	private float preX;
+    private float preY;
+    private float x;
+   private float y;
+	    
 	
 	public EditImage(Context context, CropImageView imageView, Bitmap bm)
 	{
@@ -58,17 +63,17 @@ public class EditImage
 	}
 	
 
-
-/*
- * 图片微调
- * */
-    public void subCrop(Bitmap mTmpBmp) {
-        Log.i("editimage 监测","subCrop");
-        mBitmap = mTmpBmp;
-        startSubCutProcess();
+    public void subCrop(float preX,float preY,float x,float y) {
+        if (((Activity)mContext).isFinishing()) {
+            return;
+        }
+       this.preX = preX;
+       this.preY  = preY;
+       this.x = x;
+       this.y = y;
+      startSubCutProcess();
     }
-
-	
+    
 	
 
     /**
@@ -171,7 +176,7 @@ public class EditImage
             public void run() {
                 final CountDownLatch latch = new CountDownLatch(1);
                 final Bitmap b = mBitmap;
-                mHandler.post(new Runnable() {
+                mHandler.post(new Runnable() {//post一个runnable对象
                     public void run() {
                         if (b != mBitmap && b != null) {
                             mImageView.setImageBitmap(b);
@@ -194,44 +199,39 @@ public class EditImage
         }, mHandler);
     }
 
-
-
-    private void startSubCutProcess() {
-        if (((Activity)mContext).isFinishing()) {
-            return;
-        }
-
-        showProgressDialog(mContext.getResources().getString(R.string.running_cut_process), new Runnable() {
-            public void run() {
-                final CountDownLatch latch = new CountDownLatch(1);
-                final Bitmap b = mBitmap;
-                mHandler.post(new Runnable() {
-                    public void run() {
-                        if (b != mBitmap && b != null) {
-                            mImageView.setImageBitmap(b);
-                            mBitmap.recycle();
-                            mBitmap = b;
-                        }
-                        if (mImageView.getScale() == 1.0f) {
-                            mImageView.center(true, true);
-                        }
-                        latch.countDown();
-                    }
-                });
-                try {
-                    latch.await();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                Log.d("carol", "开始识别drawview drawstate" );
-                if(mDrawView.drawState == DrawView.MOTION_UP) {
-                    Log.d("carol", "可以识别drawview drawstate" );
-                mRunSubCutProcess.run();
-                }
-            }
-        }, mHandler);
+private void startSubCutProcess() {
+    if (((Activity)mContext).isFinishing()) {
+        return;
     }
-	
+    
+    showProgressDialog(mContext.getResources().getString(R.string.running_cut_process), new Runnable() {
+        public void run() {
+                    final CountDownLatch latch = new CountDownLatch(1);
+                    final Bitmap b = mBitmap;
+                    mHandler.post(new Runnable() {
+                        public void run() {
+                            if (b != mBitmap && b != null) {
+                                mImageView.setImageBitmap(b);
+                                mBitmap.recycle();
+                                mBitmap = b;
+                            }
+                            if (mImageView.getScale() == 1.0f) {
+                                mImageView.center(true, true);
+                            }
+                            latch.countDown();
+                        }
+                    });
+                    try {
+                        latch.await();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    mRunSubCutProcess.run();
+                }
+            },mHandler);
+}
+
+
 	/**
 	 * 裁剪并保存
 	 * @return
@@ -449,48 +449,26 @@ public class EditImage
 
     Runnable mRunSubCutProcess = new Runnable() {
         Matrix mImageMatrix;
-        
-        private void makeDefault() {
-            Log.i("EditImage 监测", "makeDefault 初始化DrawView的地方");//初始化DrawView的地方
-               DrawView tmpView = new DrawView(mContext,mImageView);
-               
-    
-        }   
-
+       
         @Override
         public void run() {
-                mImageMatrix = mImageView.getImageMatrix();
-
-                mHandler.post(new Runnable() {
-                    public void run() {
-                        makeDefault();
-                        mImageView.invalidate();
-                        mDrawView = mImageView.mDrawView;
-                        mDrawView.setFocus(true);
-                        int w =mBitmap.getWidth();
-                        int h = mBitmap.getHeight();
-                        float preX = mDrawView.getPreX();
-                        float preY = mDrawView.getPreY();
-                        float xx = mDrawView.getX();
-                        float yy = mDrawView.getY();
-                        int[] pixels = new int[w*h];
-                        mBitmap.getPixels(pixels, 0, w, 0, 0, w, h);
-                          Log.d("PIXELS IS EMPTY",""+(pixels==null));
-                        Log.d("preX:preY:x:y:w:h:",""+preX+" "+preY+" "+xx+" "+yy+" "+w+" "+h);
-                        int[] resultImg =  GrabCut.grabCut(pixels, w, h,preX, preY, xx,yy );
-                        Log.d("RESULT PIXELS IS EMPTY",""+(resultImg==null));
-                        Bitmap resultImgBit=Bitmap.createBitmap(w, h, Config.RGB_565);  
-                        resultImgBit.setPixels(resultImg, 0, w, 0, 0, w, h);
-                        mImageView.setImageBitmap(resultImgBit); }
-            });
-            
-            
+            int w =mBitmap.getWidth();
+            int h = mBitmap.getHeight();
+            mImageMatrix = mImageView.getImageMatrix();
+            int[] pixels = new int[w*h];
+            mBitmap.getPixels(pixels, 0, w, 0, 0, w, h);
+            int[] resultImg =  GrabCut.grabCut(pixels, w, h,preX, preY, x,y );
+            Log.i("editimage","resultimage是否为空"+(resultImg == null));
+            Bitmap resultImgBit=Bitmap.createBitmap(w, h, Config.RGB_565);  
+            resultImgBit.setPixels(resultImg, 0, w, 0, 0, w, h);
+            Log.i("editimage","mRunSubCutProcess中已经返回结果resultImgBit");
+            mImageView.setImageBitmap(resultImgBit);
         }
     
     };
     
 	
-	class BackgroundJob implements Runnable
+	class BackgroundJob implements Runnable//结束背景任务，并关闭progressDialog
     {
     	private ProgressDialog mProgress;
     	private Runnable mJob;
@@ -526,10 +504,6 @@ public class EditImage
     }
 
 
-    public void setDrawView(DrawView tmpDrawView) {
-        // TODO Auto-generated method stub
-        mDrawView = tmpDrawView;
-    }
 
 
   
