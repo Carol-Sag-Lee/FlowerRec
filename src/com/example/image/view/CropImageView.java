@@ -87,6 +87,11 @@ public class CropImageView extends ImageViewTouchBase {
         cacheCanvas.setBitmap(cacheBitmap);
         path = new Path();
         Log.i("cropimageview", "cropimageview中初始化");
+        int w = 0;
+        int h = 0;
+        int[] loc = {w,h};
+        this.getLocationInWindow(loc);
+        Log.i("cropimageview", "cropimageview在窗口中的坐标"+loc[0]+":"+loc[1]);
     }
     
 
@@ -179,8 +184,8 @@ public class CropImageView extends ImageViewTouchBase {
         }
         // 设置cacheCanvas将会绘制到内存中的mBitmapDisplayed上
       mBitmapDisplayed = Bitmap.createScaledBitmap(bitmap, bitmap.getWidth(), bitmap.getHeight(), false);
-      
       cacheCanvas.drawBitmap(mBitmapDisplayed,0,0,null);
+      
     }
     
     @Override

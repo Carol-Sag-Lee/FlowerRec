@@ -452,17 +452,23 @@ private void startSubCutProcess() {
        
         @Override
         public void run() {
-            int w =mBitmap.getWidth();
-            int h = mBitmap.getHeight();
-            mImageMatrix = mImageView.getImageMatrix();
-            int[] pixels = new int[w*h];
-            mBitmap.getPixels(pixels, 0, w, 0, 0, w, h);
-            int[] resultImg =  GrabCut.grabCut(pixels, w, h,preX, preY, x,y );
-            Log.i("editimage","resultimage是否为空"+(resultImg == null));
-            Bitmap resultImgBit=Bitmap.createBitmap(w, h, Config.RGB_565);  
-            resultImgBit.setPixels(resultImg, 0, w, 0, 0, w, h);
-            Log.i("editimage","mRunSubCutProcess中已经返回结果resultImgBit");
-            mImageView.setImageBitmap(resultImgBit);
+            mHandler.post(new Runnable() {
+                public void run() {   
+                    int w =mBitmap.getWidth();
+                    int h = mBitmap.getHeight();
+                    mImageMatrix = mImageView.getImageMatrix();
+                    int[] pixels = new int[w*h];
+                    mBitmap.getPixels(pixels, 0, w, 0, 0, w, h);
+                    pixels =  GrabCut.grabCut(pixels, w, h,preX, preY, x,y );
+                    Log.i("editimage","resultimage是否为空"+(pixels == null));
+                    Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+                    b.setPixels(pixels, 0, w, 0, 0, w, h);//immutable的图片不能setPixels
+                    Log.i("editimage","mRunSubCutProcess中已经返回结果resultImgBit");
+                    mImageView.setImageBitmap(b);
+                    mImageView.invalidate();
+             } });
+        
+            
         }
     
     };
