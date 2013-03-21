@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <opencv2/opencv.hpp>
-//#include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <android/log.h>
@@ -10,7 +9,7 @@
 
 
 
-
+using namespace std;
 using namespace cv;
 
 	JNIEXPORT jintArray JNICALL Java_com_example_image_util_GrabCut_grabCut(JNIEnv* env, jclass obj,jintArray buf,jfloat width,
@@ -22,6 +21,12 @@ using namespace cv;
 		const Scalar BLUE = Scalar(255,0,0);
 		const Scalar LIGHTBLUE = Scalar(255,255,160);
 		const Scalar GREEN = Scalar(0,255,0);
+		enum{
+			GC_BGD    = 0,  //!< background
+			GC_FGD    = 1,  //!< foreground
+			GC_PR_BGD = 2,  //!< most probably background
+			GC_PR_FGD = 3   //!< most probably foreground
+		};
 
 		int radius = 2;
 		int thickness = -1;
@@ -33,9 +38,7 @@ using namespace cv;
 		cbuf = env->GetIntArrayElements(buf, false);
 
 		if(cbuf == NULL)
-
 		{
-
 			return 0;
 		}
 		Mat image(height,width,CV_8UC3,(unsigned char*)cbuf);
@@ -47,9 +50,13 @@ using namespace cv;
 		Mat binMask;
 		Mat res;
 		mask.create(height,width,CV_8UC1);
-		__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","before function ");
+		mask.setTo(GC_BGD);
+		rect.x = std::max((jfloat)0,preX);
+		rect.y = std::max((jfloat)0,preY);
+		rect.width = std::min(rect.width,image.cols-rect.x);
+		rect.height = std::min (rect.height, image.cols-rect.y);
+		(mask(rect)).setTo(Scalar(GC_PR_FGD));
 		grabCut(image,mask,rect,bgdModel, fgdModel, 1,GC_INIT_WITH_RECT);
-		__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","function is called sucessfully");
 		/*
 		 * getBinMask方法
 		 */
@@ -86,8 +93,9 @@ using namespace cv;
         }
 		for (jint i =0;i < size;i++)
 		{
-			cbuf[i] = (int)res.data[i];
+			cbuf[i] = binMask.data[i];
 		}
+		env->SetIntArrayRegion(buf, 0, size, cbuf);
 		__android_log_write(ANDROID_LOG_ERROR,"Tag","before return ");
 		return buf;
 	}

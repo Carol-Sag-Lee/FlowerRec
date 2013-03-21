@@ -179,7 +179,8 @@ public class EditImage
                 mHandler.post(new Runnable() {//post一个runnable对象
                     public void run() {
                         if (b != mBitmap && b != null) {
-                            mImageView.setImageBitmap(b);
+                            Log.i("editimage", "startCutProcess showProgressDialog mHandler run");
+          //                  mImageView.setImageBitmap(b);
                             mBitmap.recycle();
                             mBitmap = b;
                         }
@@ -194,6 +195,7 @@ public class EditImage
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
+                Log.i("editimage", "startCutProcess showProgressDialog before mRunCutProcess run");
                 mRunCutProcess.run();
             }
         }, mHandler);
@@ -210,6 +212,7 @@ private void startSubCutProcess() {
                     final Bitmap b = mBitmap;
                     mHandler.post(new Runnable() {
                         public void run() {
+                            Log.i("editimage","startSubCutProcess中showProgressDialog的mHandler运行run");
                             if (b != mBitmap && b != null) {
                                 mImageView.setImageBitmap(b);
                                 mBitmap.recycle();
@@ -366,7 +369,6 @@ private void startSubCutProcess() {
         private void makeDefault() {
             Log.i("EditImage 监测", "makeDefault 初始化highlightView的地方");//初始化HighLightView的地方
             HighlightView hv = new HighlightView(mImageView);
-
             int width = mBitmap.getWidth();
             int height = mBitmap.getHeight();
 
@@ -459,16 +461,26 @@ private void startSubCutProcess() {
                     mImageMatrix = mImageView.getImageMatrix();
                     int[] pixels = new int[w*h];
                     mBitmap.getPixels(pixels, 0, w, 0, 0, w, h);
-                    pixels =  GrabCut.grabCut(pixels, w, h,preX, preY, x,y );
-                    Log.i("editimage","resultimage是否为空"+(pixels == null));
-                    Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-                    b.setPixels(pixels, 0, w, 0, 0, w, h);//immutable的图片不能setPixels
+                    int[] tmpPixels = new int[w*h];
+                    for(int i =0; i<w*h;i++) {
+                        tmpPixels[i] = 0;
+                    }
+                    tmpPixels =  GrabCut.grabCut(pixels, w, h,preX, preY, x,y ); //返回值全部为空
+              
+                    final Bitmap b = Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);
+                    b.setPixels(tmpPixels, 0, w, 0, 0, w, h);//immutable的图片不能setPixels
+                    
+                    if(b != mBitmap && b != null) {
+                        Log.i("editimage", "b不为空");
+                        mImageView.setImageBitmap(b);
+                        mBitmap.recycle();
+                        mBitmap = b;
+                    }
+           
                     Log.i("editimage","mRunSubCutProcess中已经返回结果resultImgBit");
-                    mImageView.setImageBitmap(b);
                     mImageView.invalidate();
              } });
         
-            
         }
     
     };

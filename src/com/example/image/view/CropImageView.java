@@ -185,7 +185,6 @@ public class CropImageView extends ImageViewTouchBase {
         // 设置cacheCanvas将会绘制到内存中的mBitmapDisplayed上
       mBitmapDisplayed = Bitmap.createScaledBitmap(bitmap, bitmap.getWidth(), bitmap.getHeight(), false);
       cacheCanvas.drawBitmap(mBitmapDisplayed,0,0,null);
-      
     }
     
     @Override

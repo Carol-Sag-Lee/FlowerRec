@@ -406,8 +406,8 @@ public class HighlightView {
     private ModifyMode mMode = ModifyMode.None;
 
     public Rect mDrawRect; // in screen space
-    private RectF mImageRect; // in image space
-    public RectF mCropRect; // in image space
+    private RectF mImageRect; // in image space 图像矩形
+    public RectF mCropRect; // in image space 切割矩形
     public Matrix mMatrix;
 
     private boolean mMaintainAspectRatio = false;

@@ -160,13 +160,10 @@ public class EditImageActivity extends Activity {
 				//获取图片
 				Intent intent = getIntent();
 				path = intent.getStringExtra("path");
-				Log.d("may", "MainActivity--->path="+path);
 				if(path == null){
                     Toast.makeText(this, "NND,path和uri都空", Toast.LENGTH_SHORT).show();
                     finish();
                  }
-			
-				   
                     mBitmap = BitmapFactory.decodeFile(path);
                     if(mBitmap != null){
                         mTmpBmp = mBitmap.copy(Bitmap.Config.ARGB_8888, true);
@@ -222,7 +219,7 @@ public class EditImageActivity extends Activity {
 			mImageViewWidth = mImageView.getWidth();
 			mImageViewHeight = mImageView.getHeight();
 			return;
-			//不理解
+			//取消操作
 		case R.id.cancel_step:
 		    if (mState == STATE_CROP || mState == STATE_SUB_CROP)
             {
@@ -238,7 +235,6 @@ public class EditImageActivity extends Activity {
 			//微调
 		case R.id.subtle_cut_button:
 		    flag = FLAG_SUB_CROP;
-		
 		   showSaveStep();
 			break;
 		case R.id.retrieval:
@@ -398,6 +394,7 @@ public class EditImageActivity extends Activity {
 
 	private void resetToOriginal()
 	{
+	    Log.i("editimageactivity","resetToOriginal");
 		mTmpBmp = mBitmap;
 		mImageView.setImageBitmap(mBitmap);
 		// 已经保存图片
@@ -456,7 +453,6 @@ public class EditImageActivity extends Activity {
 		outStream.close();
 		inStream.close();
 		return data;
-
 	}
 	
 	public static Bitmap getPicFromBytes ( byte[] bytes , BitmapFactory.Options opts )
