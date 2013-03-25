@@ -2,6 +2,7 @@ package com.example.image.util;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
@@ -65,6 +66,7 @@ public class EditImage
 
     public void subCrop(float preX,float preY,float x,float y) {
         if (((Activity)mContext).isFinishing()) {
+            Log.i("editimage","(Activity)mContext).isFinishing()");
             return;
         }
        this.preX = preX;
@@ -466,7 +468,30 @@ private void startSubCutProcess() {
                         tmpPixels[i] = 0;
                     }
                     tmpPixels =  GrabCut.grabCut(pixels, w, h,preX, preY, x,y ); //返回值全部为空
-              
+                  /*
+                   * 写binMask文件查看结果
+                   */
+                    try {
+                        String fileName = "sdcard/binMask.txt";//sdcard中要新建好文件，用DDMS将文件拖进去
+                        int size = w*h;
+                        String s = new String();
+                        for(int i=0;i<size;i++) {
+                            if(tmpPixels[i]>0)
+                            {
+                               s+=tmpPixels[i]+",";//检查是否因为这个而一直malloc
+                            }
+                        }
+                        String message = "binMask"+s ;
+                        FileOutputStream fout = new FileOutputStream(fileName);
+                        byte [] bytes = message.getBytes(); 
+                        fout.write(bytes); 
+                         fout.close(); 
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        Log.i("editimage", "filewriter没有成功");
+                        e.printStackTrace();
+                    }
+                    
                     final Bitmap b = Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);
                     b.setPixels(tmpPixels, 0, w, 0, 0, w, h);//immutable的图片不能setPixels
                     

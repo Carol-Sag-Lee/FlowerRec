@@ -21,12 +21,7 @@ using namespace cv;
 		const Scalar BLUE = Scalar(255,0,0);
 		const Scalar LIGHTBLUE = Scalar(255,255,160);
 		const Scalar GREEN = Scalar(0,255,0);
-		enum{
-			GC_BGD    = 0,  //!< background
-			GC_FGD    = 1,  //!< foreground
-			GC_PR_BGD = 2,  //!< most probably background
-			GC_PR_FGD = 3   //!< most probably foreground
-		};
+
 
 		int radius = 2;
 		int thickness = -1;
@@ -35,12 +30,19 @@ using namespace cv;
 		vector<Point> fgdPxls, bgdPxls, prFgdPxls, prBgdPxls;
 		int iterCount;
 		jint *cbuf;
-		cbuf = env->GetIntArrayElements(buf, false);
+		cbuf = env->GetIntArrayElements(buf, JNI_FALSE);
 
 		if(cbuf == NULL)
 		{
+			__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","cbuf is empty");
 			return 0;
 		}
+		//改到此为止，参数为空，要验证
+		jstring s = new jstring();
+		s = cbuf;
+		__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP",s);
+
+		__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","cbuf is not empty");
 		Mat image(height,width,CV_8UC3,(unsigned char*)cbuf);
 		int size = width * height;
 		Mat bgdModel;
@@ -57,6 +59,10 @@ using namespace cv;
 		rect.height = std::min (rect.height, image.cols-rect.y);
 		(mask(rect)).setTo(Scalar(GC_PR_FGD));
 		grabCut(image,mask,rect,bgdModel, fgdModel, 1,GC_INIT_WITH_RECT);
+		if(image.empty())//empty()为true -- 元素数目为0或者data为NULL
+		{
+			__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","image is empty");
+		}
 		/*
 		 * getBinMask方法
 		 */
@@ -69,21 +75,16 @@ using namespace cv;
 
 		}
 		binMask = mask & 1;
-		__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","before showImage");
+		for(int i = 0;i<size;i++)
+		{
+		if(image.data[i]>0) cout<<image.data[i]<<endl;
+		}
+
+		__android_log_write(ANDROID_LOG_INFO,"GrabCut.CPP","before showImage");
 		/*
 		 * showImage方法部分
 		 */
 		image.copyTo(res,binMask);
-		vector<Point>::const_iterator it;
-				for( it = bgdPxls.begin(); it != bgdPxls.end(); ++it )
-					circle( res, *it, radius, BLUE, thickness );//circle(image,point,radius,color,linetype)
-				for( it = fgdPxls.begin(); it != fgdPxls.end(); ++it )
-					circle( res, *it, radius, RED, thickness );
-				for( it = prBgdPxls.begin(); it != prBgdPxls.end(); ++it )
-					circle( res, *it, radius, LIGHTBLUE, thickness );
-				for( it = prFgdPxls.begin(); it != prFgdPxls.end(); ++it )
-					circle( res, *it, radius, PINK, thickness );
-				rectangle( res, Point( rect.x, rect.y ), Point(rect.x + rect.width, rect.y + rect.height ), GREEN, 2);//rec(image,point1,point2,color,linetype)
 		bgdPxls.clear(); fgdPxls.clear();
 		prBgdPxls.clear(); prFgdPxls.clear();
 		__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","before return declaration ");
