@@ -32,19 +32,37 @@ using namespace cv;
 		jint *cbuf;
 		cbuf = env->GetIntArrayElements(buf, JNI_FALSE);
 
+
+
 		if(cbuf == NULL)
 		{
 			__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","cbuf is empty");
 			return 0;
 		}
-		//改到此为止，参数为空，要验证
-		jstring s = new jstring();
-		s = cbuf;
-		__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP",s);
+		//判断cbuf是否为零,结果cbuf全部为负数 有
+//		for (jint i =0;i < width*height;i++)
+//		{
+//
+//			if(cbuf[i]>0)
+//			{
+//				__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","cbuf is greater than 0");
+//			}
+//			else if(cbuf[i]<0)
+//			{
+//				__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","cbuf is less than 0");
+//			}
+//			else
+//			{
+//				__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","cbuf is 0");
+//			}
+//		}
 
 		__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","cbuf is not empty");
 		Mat image(height,width,CV_8UC3,(unsigned char*)cbuf);
 		int size = width * height;
+		/*
+		 * 只要是大的数据就会不能显示 死机 不要想写出所有数据来
+		 */
 		Mat bgdModel;
 		Mat fgdModel;
 		Rect rect = Rect(preX,preY,x,y);//rect = Rect( Point(rect.x, rect.y), Point(x,y) );设置rect的c++函数
@@ -75,16 +93,29 @@ using namespace cv;
 
 		}
 		binMask = mask & 1;
-		for(int i = 0;i<size;i++)
-		{
-		if(image.data[i]>0) cout<<image.data[i]<<endl;
-		}
 
+		//判断binMask中data是否为零,只有大于0和等于0
+//		for (jint i =0;i < width*height;i++)
+//		{
+//			cbuf[i] = binMask.data[i];
+//			if(cbuf[i]>0)
+//			{
+//				__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","cbuf is greater than 0");
+//			}
+//			else if(cbuf[i]<0)
+//			{
+//				__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","cbuf is less than 0");
+//			}
+//			else
+//			{
+//				__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","cbuf is 0");
+//			}
+//		}
 		__android_log_write(ANDROID_LOG_INFO,"GrabCut.CPP","before showImage");
 		/*
 		 * showImage方法部分
 		 */
-		image.copyTo(res,binMask);
+		//image.copyTo(res,binMask);
 		bgdPxls.clear(); fgdPxls.clear();
 		prBgdPxls.clear(); prFgdPxls.clear();
 		__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","before return declaration ");
@@ -92,12 +123,13 @@ using namespace cv;
         {
 		__android_log_write(ANDROID_LOG_ERROR,"GrabCut.CPP","size大于10000");
         }
-		for (jint i =0;i < size;i++)
-		{
-			cbuf[i] = binMask.data[i];
-		}
+
 		env->SetIntArrayRegion(buf, 0, size, cbuf);
 		__android_log_write(ANDROID_LOG_ERROR,"Tag","before return ");
+		if(size == 131705)
+		{
+			__android_log_write(ANDROID_LOG_ERROR,"Tag","size is 131705 ");
+		}
 		return buf;
 	}
 

@@ -459,38 +459,29 @@ private void startSubCutProcess() {
             mHandler.post(new Runnable() {
                 public void run() {   
                     int w =mBitmap.getWidth();
-                    int h = mBitmap.getHeight();
+                    int h = mBitmap.getHeight(); 
+                    int size = w*h;
                     mImageMatrix = mImageView.getImageMatrix();
-                    int[] pixels = new int[w*h];
+                    int[] pixels = new int[size];
                     mBitmap.getPixels(pixels, 0, w, 0, 0, w, h);
-                    int[] tmpPixels = new int[w*h];
-                    for(int i =0; i<w*h;i++) {
-                        tmpPixels[i] = 0;
+                    for(int i =0;i<size;i++)
+                    {
+                        pixels[i] = pixels[i]&0x00ffffff;
                     }
-                    tmpPixels =  GrabCut.grabCut(pixels, w, h,preX, preY, x,y ); //返回值全部为空
-                  /*
-                   * 写binMask文件查看结果
+                    int[] tmpPixels =  GrabCut.grabCut(pixels, w, h,preX, preY, x,y ); //返回值全部为空
+                    for(int i =0;i<size;i++)
+                    {
+                        tmpPixels[i] = tmpPixels[i]|0xff000000;
+                    }
+                    /*
+                   * 查看返回值结果
                    */
-                    try {
-                        String fileName = "sdcard/binMask.txt";//sdcard中要新建好文件，用DDMS将文件拖进去
-                        int size = w*h;
-                        String s = new String();
-                        for(int i=0;i<size;i++) {
-                            if(tmpPixels[i]>0)
-                            {
-                               s+=tmpPixels[i]+",";//检查是否因为这个而一直malloc
-                            }
-                        }
-                        String message = "binMask"+s ;
-                        FileOutputStream fout = new FileOutputStream(fileName);
-                        byte [] bytes = message.getBytes(); 
-                        fout.write(bytes); 
-                         fout.close(); 
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        Log.i("editimage", "filewriter没有成功");
-                        e.printStackTrace();
+               
+                    for(int i =0; i<size;i++) {
+                        if(tmpPixels[i] !=0)
+                        Log.i("editimage","tmp["+i+"]"+tmpPixels[i]) ;
                     }
+                    Log.i("editimage","w*h"+w*h+"tmpPixels长度"+tmpPixels.length);
                     
                     final Bitmap b = Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);
                     b.setPixels(tmpPixels, 0, w, 0, 0, w, h);//immutable的图片不能setPixels
