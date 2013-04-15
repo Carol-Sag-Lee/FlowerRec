@@ -279,7 +279,7 @@ private void startSubCutProcess() {
 
         // If we are circle cropping, we want alpha channel, which is the
         // third param here.
-        Bitmap croppedImage = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        Bitmap croppedImage = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         {
             Canvas canvas = new Canvas(croppedImage);
             Rect dstRect = new Rect(0, 0, width, height);
@@ -453,36 +453,36 @@ private void startSubCutProcess() {
 
     Runnable mRunSubCutProcess = new Runnable() {
         Matrix mImageMatrix;
-       
+            int w =mBitmap.getWidth();
+                    int h = mBitmap.getHeight(); 
+                    int size = w*h;   
+                    int[] pixels = new int[size];
+                  
         @Override
         public void run() {
             mHandler.post(new Runnable() {
                 public void run() {   
-                    int w =mBitmap.getWidth();
-                    int h = mBitmap.getHeight(); 
-                    int size = w*h;
+                 mBitmap.getPixels(pixels, 0, w, 0, 0, w, h);
                     mImageMatrix = mImageView.getImageMatrix();
-                    int[] pixels = new int[size];
-                    mBitmap.getPixels(pixels, 0, w, 0, 0, w, h);
-                    for(int i =0;i<size;i++)
+              
+                    Log.i("editimage", "mBitmap类型"+mBitmap.getConfig());
+                    for(int i =0;i<size;i++)//已检查pixels全部为RGB值 无Alpha值
                     {
-                        pixels[i] = pixels[i]&0x00ffffff;
+                        pixels[i] = pixels[i]&0X00ffffff;
+                        
                     }
-                    int[] tmpPixels =  GrabCut.grabCut(pixels, w, h,preX, preY, x,y ); //返回值全部为空
-                    for(int i =0;i<size;i++)
+                    int[] tmpPixels = GrabCut.grabcut(pixels,w,h,preX,preY,x,y);
+                        for(int i =0;i<size;i++)
                     {
-                        tmpPixels[i] = tmpPixels[i]|0xff000000;
-                    }
+                       tmpPixels[i] = tmpPixels[i]|0xff000000; 
+                 //       if(tmpPixels[i] !=0)
+//                  Log.i("editiamge","tmpPixels["+5+"]:"+tmpPixels[5]);
+                    }   
+          
                     /*
                    * 查看返回值结果
                    */
-               
-                    for(int i =0; i<size;i++) {
-                        if(tmpPixels[i] !=0)
-                        Log.i("editimage","tmp["+i+"]"+tmpPixels[i]) ;
-                    }
-                    Log.i("editimage","w*h"+w*h+"tmpPixels长度"+tmpPixels.length);
-                    
+              
                     final Bitmap b = Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);
                     b.setPixels(tmpPixels, 0, w, 0, 0, w, h);//immutable的图片不能setPixels
                     

@@ -52,7 +52,9 @@ public class HighlightView {
         mContext = ctx;
     }
 
-    //初始化资源文件
+    /*
+     * 初始化资源文件
+     */
     private void init() {
         android.content.res.Resources resources = mContext.getResources();
         mResizeDrawableWidth = resources.getDrawable(R.drawable.camera_crop_width);
@@ -64,14 +66,14 @@ public class HighlightView {
     boolean mHidden;
     
     
-    /*
-     * 设置聚焦
-     */
+ 
     public boolean hasFocus() {
         Log.i("Highlightview 监测","hasFocus");
         return mIsFocused;
     }
-
+   /*
+     * 设置聚焦
+     */
     public void setFocus(boolean f) {
         Log.i("Highlightview 监测","setFocus");
         mIsFocused = f;
@@ -234,7 +236,7 @@ public class HighlightView {
     }
 
     /*
-     * 根据哪个边来设置移动Handles motion (dx, dy) in screen space.
+     * 处理边框移动Handles motion (dx, dy) in screen space.
      */
     // The "edge" parameter specifies which edges the user is dragging.
     public void handleMotion(int edge, float dx, float dy) {
@@ -262,7 +264,7 @@ public class HighlightView {
     }
 
     /*
-     *  修改矩形框大小Grows the cropping rectange by (dx, dy) in image space.
+     *  在图像区域根据(dx,dy)改变rec大小Grows the cropping rectange by (dx, dy) in image space.
      */
     void moveBy(float dx, float dy) {
         Log.i("Highlightview 监测","moveBy");
@@ -368,7 +370,7 @@ public class HighlightView {
     }
 
     /*
-     * view设置参数格式等信息
+     * 设置view参数格式等信息
      */
     public void setup(Matrix m, Rect imageRect, RectF cropRect, boolean circle, boolean maintainAspectRatio) {
         Log.i("Highlightview 监测","setup");

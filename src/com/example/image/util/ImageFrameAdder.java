@@ -99,7 +99,7 @@ public class ImageFrameAdder
 	 */
 	private Bitmap drawableToBitmap(Drawable drawable)
 	{
-		Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), drawable.getOpacity() != PixelFormat.OPAQUE ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), drawable.getOpacity() != PixelFormat.OPAQUE ? Bitmap.Config.ARGB_8888: Bitmap.Config.ARGB_8888);
 		Canvas canvas = new Canvas(bitmap);
 		// canvas.setBitmap(bitmap);
 		drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
@@ -291,7 +291,7 @@ public class ImageFrameAdder
 		int width = src.width();
 		int height = src.height();
 		Rect des = new Rect(0, 0, width, height);
-		Bitmap croppedImage = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap croppedImage = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		Canvas canvas = new Canvas(croppedImage);
 		canvas.drawBitmap(bmp, src, des, null);
 		return croppedImage;

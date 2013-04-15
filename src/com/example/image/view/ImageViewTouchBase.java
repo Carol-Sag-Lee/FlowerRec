@@ -29,7 +29,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.widget.ImageView;
 
-import com.example.image.util.RotateBitmap;
+
 
 public abstract class ImageViewTouchBase extends ImageView {
 

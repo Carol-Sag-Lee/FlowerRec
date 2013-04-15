@@ -102,7 +102,7 @@ public class ImageSpecific
 		long start = System.currentTimeMillis();
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		int pixColor = 0;
 		int pixR = 0;
 		int pixG = 0;
@@ -143,7 +143,7 @@ public class ImageSpecific
 	{
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		int pixColor = 0;
 		
@@ -246,7 +246,7 @@ public class ImageSpecific
 		
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		int pixR = 0;
 		int pixG = 0;
@@ -315,7 +315,7 @@ public class ImageSpecific
 	{
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		int pixR = 0;
 		int pixG = 0;
@@ -425,7 +425,7 @@ public class ImageSpecific
 		
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		int pixR = 0;
 		int pixG = 0;
@@ -489,7 +489,7 @@ public class ImageSpecific
 		long start = System.currentTimeMillis();
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		Bitmap overlay = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.rainbow_overlay);
 		int w = overlay.getWidth();
@@ -568,7 +568,7 @@ public class ImageSpecific
 		long start = System.currentTimeMillis();
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		// 对边框图片进行缩�?
 		Bitmap overlay = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.rainbow_overlay);
@@ -654,7 +654,7 @@ public class ImageSpecific
 	{
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		int pixR = 0;
 		int pixG = 0;
@@ -701,7 +701,7 @@ public class ImageSpecific
 	{
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		int pixR = 0;
 		int pixG = 0;
@@ -754,7 +754,7 @@ public class ImageSpecific
 		// 255 - x
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		int pixR = 0;
 		int pixG = 0;
@@ -802,7 +802,7 @@ public class ImageSpecific
 		final int MAX_VALUE = 255;
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		int pixR = 0;
 		int pixG = 0;
@@ -853,7 +853,7 @@ public class ImageSpecific
 	{
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		int pixR = 0;
 		int pixG = 0;
@@ -914,7 +914,7 @@ public class ImageSpecific
 	{
 		final int width = bmp.getWidth();
 		final int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		int pixR = 0;
 		int pixG = 0;
@@ -981,7 +981,7 @@ public class ImageSpecific
 	{
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		int pixR = 0;
 		int pixG = 0;
@@ -1047,7 +1047,7 @@ public class ImageSpecific
 	{
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		// 边框图片
 		Bitmap overlay = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.black);
@@ -1156,7 +1156,7 @@ public class ImageSpecific
 		x = (width - 40) / 2;
 		y = (height - 40) / 2;
 		r = 60;
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		int pixR = 0;
 		int pixG = 0;
@@ -1232,7 +1232,7 @@ public class ImageSpecific
 		
 		int width = bmp.getWidth();
 		int height = bmp.getHeight();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565); // 创建�?��相同大小的图�?
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888); // 创建�?��相同大小的图�?
 		
 		// 保存像素点的RGB�?
 		int newR = 0;
@@ -1280,7 +1280,7 @@ public class ImageSpecific
 	private Bitmap chessbord(int width)
 	{
 		long start = System.currentTimeMillis();
-		Bitmap bitmap = Bitmap.createBitmap(width, width, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, width, Bitmap.Config.ARGB_8888);
 		int[] pixels = new int[width * width];
 		
 		final int delta = width / 8; // 将整个图片分�? X 8个区域，delta表示每个区域的宽度或高度
@@ -1345,7 +1345,7 @@ public class ImageSpecific
 		// 创建新图片，中间�?0个像素的间距
 		final int width = bmp.getWidth() + 10;
 		final int height = bmp.getHeight() + 10;
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		
 		// 组合图片
 		final int leftPos = width - leftBottom.getWidth();
@@ -1382,7 +1382,7 @@ public class ImageSpecific
 		final int height = bmp.getHeight();
 		int startWidth = 0; // 起始宽度位置
 		int endWidth = width / 2; // 结束宽度位置
-		Bitmap bitmap = Bitmap.createBitmap(endWidth, height, Bitmap.Config.RGB_565); // 创建新的图片，宽度只有原来的�?��
+		Bitmap bitmap = Bitmap.createBitmap(endWidth, height, Bitmap.Config.ARGB_8888); // 创建新的图片，宽度只有原来的�?��
 		
 		switch (flag)
 		{
@@ -1413,7 +1413,7 @@ public class ImageSpecific
 		final int height = bmp.getHeight();
 		int startHeight = 0; // 高度的起始位�?
 		int endHeight = height / 2; // 高度的结束位�?
-		Bitmap bitmap = Bitmap.createBitmap(width, height / 2, Bitmap.Config.RGB_565); // 创建新图片，高度只有原来的一�?
+		Bitmap bitmap = Bitmap.createBitmap(width, height / 2, Bitmap.Config.ARGB_8888); // 创建新图片，高度只有原来的一�?
 		
 		switch (flag)
 		{

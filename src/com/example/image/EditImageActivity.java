@@ -33,7 +33,6 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import com.example.image.view.menu.MenuView;
 import com.example.image.view.menu.OnMenuClickListener;
-import com.example.image.view.menu.SecondaryListMenuView;
 
 import android.widget.Button;
 import android.widget.TextView;
@@ -77,20 +76,8 @@ public class EditImageActivity extends Activity {
     private final int[] RETRIEVAL_IMAGES = new int[] { R.drawable.ic_menu_crop };
     private final int[] RETRIEVAL_TEXTS = new int[] { R.string.retrieval };
     
-    /**
-     * 二级菜单
-     */
-    //细节修改
-    private SecondaryListMenuView mSecondaryListMenu;
-    private final int[] COLOR_IMAGES = new int[] { R.drawable.color_red, R.drawable.color_green, R.drawable.color_blue };
-    private final int[] COLOR_TEXTS = new int[] { R.string.color_red, R.string.color_green,R.string.color_blue };
-    //细节修改
-    private final int[] WIDTH_IMAGES = new int[] { R.drawable.ic_menu_rotate_left, R.drawable.ic_menu_rotate_right, R.drawable.ic_menu_rotate_right };
-    private final int[] WIDTH_TEXTS = new int[] { R.string.width_1, R.string.width_3, R.string.width_5 };
-    private final int[] BLUR_TEXT = new int[] { R.string.blur };
-    private final int[] EMBOSS_TEXT = new int[] { R.string.emboss };
 
-   
+
     
 	
 	private static final int EDIT_IMAGE_FROM_CAMERA = 0x4;
@@ -267,7 +254,7 @@ public class EditImageActivity extends Activity {
                 showSaveStep();
                 prepare(STATE_SUB_CROP, CropImageView.STATE_SUB_CROP,true);
                 mShowHandleName.setText(R.string.sub_crop);
-               mImageView.setDrawState(CropImageView.DRAWABLE);
+               
                 break;
             case FLAG_RETRIEVAL://检索
                 break;
@@ -291,14 +278,6 @@ public class EditImageActivity extends Activity {
 
     
 
-    /**
-     * 隐藏二级菜单
-     */
-    private void dismissSecondaryMenu()
-    {
-        mSecondaryListMenu.dismiss();
-        mSecondaryListMenu = null;
-    }
     
     private void showSaveStep()
     {

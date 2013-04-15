@@ -25,15 +25,8 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+
 import android.view.MotionEvent;
-import android.view.MenuInflater;
-import android.view.View;
-import android.widget.Toast;
-import android.graphics.PorterDuff;
-import android.graphics.Region;
 
 
 import com.example.image.util.EditImage;
@@ -108,49 +101,8 @@ public class CropImageView extends ImageViewTouchBase {
             
         }
     }
-        
-        public void setDrawState(int t) {
-            drawState = t;
-        }
  
-
-    
-    @Override
-    protected void zoomTo(float scale, float centerX, float centerY) {
-        super.zoomTo(scale, centerX, centerY);
-        for (HighlightView hv : mHighlightViews) {
-            hv.mMatrix.set(getImageMatrix());
-            hv.invalidate();
-        }
-    }
-
-    @Override
-    protected void zoomIn() {
-        super.zoomIn();
-        for (HighlightView hv : mHighlightViews) {
-            hv.mMatrix.set(getImageMatrix());
-            hv.invalidate();
-        }
-    }
-
-    @Override
-    protected void zoomOut() {
-        super.zoomOut();
-        for (HighlightView hv : mHighlightViews) {
-            hv.mMatrix.set(getImageMatrix());
-            hv.invalidate();
-        }
-    }
-
-    @Override
-    protected void postTranslate(float deltaX, float deltaY) {
-        super.postTranslate(deltaX, deltaY);
-        for (int i = 0; i < mHighlightViews.size(); i++) {
-            HighlightView hv = mHighlightViews.get(i);
-            hv.mMatrix.postTranslate(deltaX, deltaY);
-            hv.invalidate();
-        }
-    }
+   
 
     // According to the event's position, change the focus to the first
     // hitting cropping rectangle.

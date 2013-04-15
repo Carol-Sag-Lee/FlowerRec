@@ -140,7 +140,7 @@ public class MainActivity extends Activity {
 	{
 		int width = 4;
 		int height = 5;
-		Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+		Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		for (int i = 0; i < height; i++)
 		{
 			for (int k = 0; k < width; k++)
