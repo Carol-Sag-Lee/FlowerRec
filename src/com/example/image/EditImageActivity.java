@@ -193,10 +193,15 @@ public class EditImageActivity extends Activity {
 			return;
 			
 		case R.id.save_step:
-		      if(mState == STATE_CROP || mState == STATE_SUB_CROP)
+		      if(mState == STATE_CROP)
 	            {
 		              mTmpBmp = mEditImage.cropAndSave(mTmpBmp);
 	            }
+		      else if ( mState == STATE_SUB_CROP)
+		      {
+		    	  	mTmpBmp = mEditImage.cropAndSave(mTmpBmp);
+		    	  	subCrop();
+		      }
 		     
 			mBitmap = mTmpBmp;
 			showSaveAll();
@@ -234,7 +239,8 @@ public class EditImageActivity extends Activity {
 	
 	
 
-    private void initMenu(int flag)
+
+	private void initMenu(int flag)
     {
         if (null == mMenuView)
         {
@@ -368,6 +374,12 @@ public class EditImageActivity extends Activity {
      *微调
      */
   
+    private void subCrop() {
+    	
+    	mShowHandleName.setText(R.string.crop);
+		mEditImage.subCrop(mTmpBmp);
+		reset();
+	}
 
 	
 

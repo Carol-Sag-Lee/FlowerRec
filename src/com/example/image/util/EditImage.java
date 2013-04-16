@@ -6,6 +6,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -40,11 +46,8 @@ public class EditImage
 
 	private Bitmap mBitmap;
 	
-	private float preX;
-    private float preY;
-    private float x;
-   private float y;
-	    
+
+	public Mat res;  
 	
 	public EditImage(Context context, CropImageView imageView, Bitmap bm)
 	{
@@ -64,16 +67,10 @@ public class EditImage
 	}
 	
 
-    public void subCrop(float preX,float preY,float x,float y) {
-        if (((Activity)mContext).isFinishing()) {
-            Log.i("editimage","(Activity)mContext).isFinishing()");
-            return;
-        }
-       this.preX = preX;
-       this.preY  = preY;
-       this.x = x;
-       this.y = y;
-      startSubCutProcess();
+    public void subCrop(Bitmap bm) {
+     
+        mBitmap = bm;
+        startSubCutProcess();
     }
     
 	
@@ -452,31 +449,52 @@ private void startSubCutProcess() {
     //mRunCutProcess结束
 
     Runnable mRunSubCutProcess = new Runnable() {
-        Matrix mImageMatrix;
-            int w =mBitmap.getWidth();
-                    int h = mBitmap.getHeight(); 
-                    int size = w*h;   
-                    int[] pixels = new int[size];
-                  
+  
+        //此处不能放变量
         @Override
         public void run() {
             mHandler.post(new Runnable() {
                 public void run() {   
-                 mBitmap.getPixels(pixels, 0, w, 0, 0, w, h);
-                    mImageMatrix = mImageView.getImageMatrix();
+			        int w = mImageView.imageW;
+			        int h = mImageView.imageH;
+			        int size = w*h; 
+                    Mat bgdModel = new Mat(1,13*5 ,CvType.CV_64FC1, new Scalar(0));
+                    Mat fgdModel = new Mat(1,13*5 ,CvType.CV_64FC1, new Scalar(0));
               
-                    Log.i("editimage", "mBitmap类型"+mBitmap.getConfig());
-                    for(int i =0;i<size;i++)//已检查pixels全部为RGB值 无Alpha值
+                    int[] tmpPixels =new int[size];
+                    if(mImageView.image == null)
                     {
-                        pixels[i] = pixels[i]&0X00ffffff;
-                        
+                    	Log.i("editImage", "mImageView.image == null");
                     }
-                    int[] tmpPixels = GrabCut.grabcut(pixels,w,h,preX,preY,x,y);
-                        for(int i =0;i<size;i++)
+                    if(mImageView.mask == null)
                     {
-                       tmpPixels[i] = tmpPixels[i]|0xff000000; 
-                 //       if(tmpPixels[i] !=0)
-//                  Log.i("editiamge","tmpPixels["+5+"]:"+tmpPixels[5]);
+                    	Log.i("editimage", "mImageView.mask == null");
+                    }
+                    if(mImageView.rect == null)
+                    {
+                    	Log.i("editimage", "mImageView.rect == null");
+                    }
+                    if(bgdModel == null)
+                    {
+                    	Log.i("editimage", "bgdModel == null");
+                    }
+                    if(fgdModel == null)
+                    {
+                    	Log.i("editimage", "fgdModel == null");
+                    }
+                  
+            		Imgproc.grabCut(mImageView.image,mImageView.mask,mImageView.rect,bgdModel,fgdModel,1,Imgproc.GC_INIT_WITH_RECT);//grabCut(Mat img, Mat mask, Rect rect, Mat bgdModel, Mat fgdModel, int iterCount, int mode)
+                    mImageView.isInitialized = true;
+            		mImageView.showImage();
+            		double[] tmpC3 = new double[3];
+            		for(int i =0;i < h;i++)
+                    {
+            			for(int j = 0;j < w;j++)
+            			{
+            				tmpC3 = mImageView.res.get(i,j) ;
+            				int ij = (i+1)*(j+1)-1;
+            				tmpPixels[ij] = (int) (( (int)tmpC3[0]<<16)+((int)tmpC3[1]<<8) + tmpC3[2]); 
+            			}
                     }   
           
                     /*

@@ -1,6 +1,7 @@
 package com.example.image.view;
 
 import java.util.ArrayList;
+import java.util.Vector;
 
 import sun.swing.plaf.synth.Paint9Painter.PaintType;
 
@@ -31,6 +32,12 @@ import android.view.MotionEvent;
 
 import com.example.image.util.EditImage;
 
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+
 public class CropImageView extends ImageViewTouchBase {
     public ArrayList<HighlightView> mHighlightViews = new ArrayList<HighlightView>();
     public  HighlightView mMotionHighlightView = null;
@@ -41,12 +48,14 @@ public class CropImageView extends ImageViewTouchBase {
     public ImageMoveView mMoveView;
     
     //画布
-    float preX;
-    float preY;
+    int preX;
+    int preY;
     public Path path;
-    float x;
-    float y;
-
+    int x;
+    int y;
+    public int imageW;
+    public int imageH;
+    
     public Paint paint = null;
     final int VIEW_WIDTH = 480;
     final int VIEW_HEIGHT = 800;
@@ -54,15 +63,28 @@ public class CropImageView extends ImageViewTouchBase {
 
     RectF mRect1 = new RectF();
     
-    public static final int DRAWABLE = 0x0;
+    public static final int DRAWABLE = 0x5;
     public static final int UNDRAWABLE = DRAWABLE + 1;
+	private static final int NOT_SET = DRAWABLE + 2;
+	private static final int IN_PROCESS = DRAWABLE + 3;
+	private static final int SET = DRAWABLE + 4 ;
     private int drawState =UNDRAWABLE ;
     
+    public org.opencv.core.Rect rect;
+    public Mat image;
+    public Mat mask;
+    public Mat res;
+    public Mat binMask;
+   
     /*
      * 微调参数
      * */
-    private EmbossMaskFilter emboss;
-    private BlurMaskFilter blur;
+
+	private int lblsState;
+	private int rectState;
+	public boolean isInitialized;
+	Vector<Point> fgdPxls, bgdPxls, prFgdPxls, prBgdPxls;
+	private int prLblsState;
     
     
     public CropImageView(Context context, AttributeSet attrs) {
@@ -80,15 +102,26 @@ public class CropImageView extends ImageViewTouchBase {
         cacheCanvas.setBitmap(cacheBitmap);
         path = new Path();
         Log.i("cropimageview", "cropimageview中初始化");
-        int w = 0;
-        int h = 0;
-        int[] loc = {w,h};
-        this.getLocationInWindow(loc);
-        Log.i("cropimageview", "cropimageview在窗口中的坐标"+loc[0]+":"+loc[1]);
+      	isInitialized = false;
+    	rectState = NOT_SET;
+    	lblsState = NOT_SET;
+    	prLblsState = NOT_SET;
+        /**
+         * 显示view大小
+         */
+//        int w = 0;
+//        int h = 0;
+//        int[] loc = {w,h};
+//        this.getLocationInWindow(loc);
+//        rect = new org.opencv.core.Rect();
+//        Log.i("cropimageview", "cropimageview在窗口中的坐标"+loc[0]+":"+loc[1]);    
     }
     
 
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+
+    
+
+	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
         if (cacheBitmap != null) {
             for (HighlightView hv : mHighlightViews) {
@@ -137,6 +170,30 @@ public class CropImageView extends ImageViewTouchBase {
         // 设置cacheCanvas将会绘制到内存中的mBitmapDisplayed上
       mBitmapDisplayed = Bitmap.createScaledBitmap(bitmap, bitmap.getWidth(), bitmap.getHeight(), false);
       cacheCanvas.drawBitmap(mBitmapDisplayed,0,0,null);
+      imageW = bitmap.getWidth();
+      imageH = bitmap.getHeight();
+      int size =imageH*imageW;
+      image = new Mat(imageH,imageW,CvType.CV_8UC3,new Scalar(0));
+      int[] dstPixels = new int[size];  
+      bitmap.getPixels(dstPixels , 0, imageW, 0, 0, imageW, imageH);
+      double[] imgC3 = new double[3];
+      for(int i=0;i<imageH;i++)
+      {
+    	  for(int j=0;j<imageW;j++)
+    	  {
+    		int ji= (i+1)*(j+1)-1;
+    		//RGB值存储顺序
+    		imgC3[0] = dstPixels[ji]&0X00FF0000;//R值
+    		imgC3[1] = dstPixels[ji]&0X0000FF00;//G值
+    		imgC3[2] = dstPixels[ji]&0X000000FF;//B值
+    	    image.put(i, j, imgC3);
+    	  }
+    	    
+      }
+    
+      mask = new Mat(imageH,imageW,CvType.CV_8UC1,new Scalar(0));
+      binMask = new Mat(imageH,imageW,CvType.CV_8UC1,new Scalar(0));
+     
     }
     
     @Override
@@ -146,29 +203,73 @@ public class CropImageView extends ImageViewTouchBase {
             return false;
         }
         //获取拖动事件的发生位置
-         x = event.getX();
-         y = event.getY();
+         x =(int) event.getX();
+         y = (int) event.getY();
         
         switch(mState) {
         case STATE_SUB_CROP:
-        	  switch(event.getAction()) {
+			switch(event.getAction()) {
         	  case MotionEvent.ACTION_DOWN:
 //        	      Log.i("cropimageview","");
         	      preX = x;
         	      preY = y;
         	      invalidate();
+        	    
+        	      if( rectState == NOT_SET )
+      			{
+      				rectState = IN_PROCESS;
+      				rect = new org.opencv.core.Rect(preX,preY,x,y);
+      			}
+      			if ( rectState == SET )
+      			{
+      				lblsState = IN_PROCESS;
+      			}
         	      break;
         	  case MotionEvent.ACTION_MOVE:
         	      Log.i("cropimageview","path.quadTo");
         	      mRect1.set(preX, preY, x, y);
 //        	      path.addRect(mRect1, Path.Direction.CW);   
 //        	      path.reset();
+        	  	if( rectState == IN_PROCESS )
+        		{
+        			rect.x = Math.max(0, preX);
+        			rect.y = Math.max(0,preY);
+        			rect.width = Math.min(x-rect.x, image.cols()-rect.x);
+        			rect.height = Math.min(y-rect.y, image.rows()-rect.y);
+        			assert( bgdPxls.isEmpty() && fgdPxls.isEmpty() && prBgdPxls.isEmpty() && prFgdPxls.isEmpty() );
+        			showImage();
+        		}
+        		else if( lblsState == IN_PROCESS )
+        		{
+        			setLblsInMask(new Point(x,y), false);
+        			showImage();
+        		}
+        		else if( prLblsState == IN_PROCESS )
+        		{
+        			setLblsInMask(new Point(x,y), true);
+        			showImage();
+        		}
         	      invalidate();
         	      break;
         	  case MotionEvent.ACTION_UP:
         	      Log.i("cropimageview","path.reset");
         	      cacheCanvas.drawRect(mRect1, paint);  
-        	      mCropImage.subCrop(preX,preY,x,y);
+        	  	if( rectState == IN_PROCESS )
+        		{	
+        	  		rect.x = Math.max(0, preX);
+        			rect.y = Math.max(0,preY);
+        			rect.width = Math.min(x-rect.x, image.cols()-rect.x);
+        			rect.height = Math.min(y-rect.y, image.rows()-rect.y);        		
+        			rectState = SET;
+        			setRectInMask();
+           			showImage();
+        		}
+        		if( lblsState == IN_PROCESS )
+        		{
+        			setLblsInMask(new Point(x,y), true);
+        			lblsState = SET;
+        			showImage();
+        		}
 //        	      path.reset();
         	      invalidate();
         	      
@@ -248,14 +349,91 @@ public class CropImageView extends ImageViewTouchBase {
              }
         }
         return true;
+    }
                  
-        }    
+        private void setLblsInMask(Point p, boolean isPr) {
+        	Vector<Point> bpxls, fpxls;
+        	char bvalue, fvalue;
+        	if( !isPr ) //
+        	{
+        		bpxls = bgdPxls;
+        		fpxls = fgdPxls;
+        		bvalue = Imgproc.GC_BGD;
+        		fvalue = Imgproc.GC_FGD;
+        	}
+        	else//
+        	{
+        		bpxls = prBgdPxls;
+        		fpxls = prFgdPxls;
+        		bvalue = Imgproc.GC_PR_BGD;
+        		fvalue = Imgproc.GC_PR_FGD;
+        	}
+        	
+		
+	}
+
+
+		public void showImage() {
+		
+			res = new Mat(imageH,imageW,CvType.CV_8UC3,new Scalar(0));
+			if( !isInitialized )
+			{
+				image.copyTo( res );
+			}
+			else
+			{
+				getBinMask();
+				image.copyTo( res, mask );
+			}
+			
+	}
+
+
+		private void getBinMask() {
+			
+			double[] tmpM = new double[1];
+			for(int i = 0;i<imageH;i++)
+			{
+				for(int j =0;j<imageW;j++)
+				{
+					tmpM = mask.get(i,j);
+					tmpM[0]= (int)tmpM[0]&0X1;
+					binMask.put(i,j,tmpM);
+				}
+				
+			}
+		}
+
+
+		private void setRectInMask() {
+			mask.setTo( new Scalar(Imgproc.GC_BGD) );
+			if(rect.y >= 0)
+			{
+				Log.i("cropimageview", "rect.y >= 0");
+			}
+			if(rect.y <= (rect.y+rect.height))
+			{
+				Log.i("cropimageview", "rect.y <= (rect.y+rect.height)");
+			}
+			if((rect.y+rect.height) <= mask.cols())
+			{
+				Log.i("cropimageview", "(rect.y+rect.height) <= mask.cols()"+ (int)( rect.y+rect.height) +","+mask.cols());
+			}
+		
+			getBinMask();
+			binMask = new Mat(binMask.clone(),rect);
+			Mat value = new Mat(imageH,imageW,CvType.CV_8UC3,new Scalar(Imgproc.GC_FGD));
+			mask.setTo(value,binMask);
+			
+		}    
    
 
 
 
 
-    // Pan the displayed image to make sure the cropping rectangle is visible.
+
+
+	// Pan the displayed image to make sure the cropping rectangle is visible.
     private void ensureVisible(HighlightView hv) {
         Rect r = hv.mDrawRect;
 
